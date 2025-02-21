@@ -1,5 +1,5 @@
 library(shiny) 
-library(shinycssloaders)
+library(shinyWidgets)
 library(rvest)
 library(dplyr) 
 library(ggplot2)
@@ -17,10 +17,12 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th
 
 test <- read_sheet(sheet_url)
 
-  
+#############################################################
+# Necessary functions
+#############################################################
 
-# Function to scrape prize money data 
-scrape_pga_prize_money <- function(golfer_name) { 
+# Function to get the Player ID's of the top 200 golfers (needed to scrape earnings data on espn.com)
+scrape_top_200_payer_ids <- function(){
   
   # get urls for top 200 players in world
   top_200_page <- read_html("https://www.espn.com/golf/rankings")
@@ -30,22 +32,34 @@ scrape_pga_prize_money <- function(golfer_name) {
     html_attr("href") %>%
     .[grepl("/golf/player/_/id/", .)]
   
+  return(player_links)
+}
+
+# Function to scrape prize money data 
+scrape_pga_prize_money <- function(golfer_name) { 
+  
   # convert input golfer name to url style
   golfer_name_lower <- gsub(" ", "-", tolower(golfer_name))
   
-  # get specific url for golfer
+  # read the player page on espn.com
   player_link <- player_links[grepl(golfer_name_lower, player_links)]
-  
   player_page <- read_html(player_link)
   
   # get earnings data for this player
   earnings <- player_page %>% 
     html_nodes(".tar.Table__TD") %>%
-    html_text() %>%
-    first()
+    html_text()
   
-  data <- data.frame(golfer_name = golfer_name, earnings = earnings) %>%
-    mutate(earnings = as.numeric(gsub("[\\$,]", "", earnings)))
+  # get corresponding tournament name
+  tournaments <- player_page %>%
+    html_nodes(".LastTournamentTable__name") %>%
+    html_nodes(".AnchorLink") %>%
+    html_text() 
+  
+  # combine
+  data <- data.frame(golfer_name = golfer_name, event_name = tournaments, earnings = earnings) %>%
+    mutate(earnings = if_else(earnings == "--", "0", earnings), # handle NAs (from missed cuts)
+           earnings = as.numeric(gsub("[\\$,]", "", earnings))) 
   
   return(data)
   }
@@ -56,39 +70,48 @@ update_google_sheet <- function(new_data) {
 
 event_list <- read_csv("data/events.csv")$event_name
 
+
+#############################################################
 # UI 
+#############################################################
 ui <- fluidPage( 
-  titlePanel("Golf Knowledge: 2025 Earnings Game"), 
+  titlePanel("Golf Knowledge: 2025 Season Earnings Game"), 
   sidebarLayout( 
-    sidebarPanel( 
-      selectInput("event_name", "Select Tournament", choices = event_list), 
-      selectInput("player_name", "Your Name", choices = c("Conor", "Shane", "Sean", "Chris")), 
+    sidebarPanel("Enter tournament picks:",
+      hr(),           
+      selectInput("event_name", "Tournament", choices = event_list), 
+      selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris")), 
       textInput("golfer1", "Golfer 1", ""), 
       textInput("golfer2", "Golfer 2", ""), 
-      actionButton("submit", "Submit Picks"), 
-      hr(), 
-      hr(),
+      actionButton("submit", "Submit Picks"),
+      textOutput("thank_you_msg"),
+      div(style = "height: 30vh;"),
       actionButton("update_data", "Update Prize Money"),
-      h5("Press this to get latest tournament prize money from the web...")),
-    mainPanel( 
-      tabsetPanel( 
-        tabPanel("Leaderboard", 
-                 plotOutput("leaderboard_plot")),
-        tabPanel("Time Series", 
-                 plotOutput("time_series_plot")), 
-        tabPanel("Weekly Picks", 
-                 DTOutput("picks_table")) 
-        ) 
-      ) 
+      h5("Press this to get latest tournament prize money from the web..."),
+      progressBar(id = "progress", value = 0, total = 100, display_pct = TRUE)),
+    mainPanel(plotOutput("leaderboard_plot"),
+              hr(),
+              plotOutput("time_series_plot"), 
+              hr(),
+              DTOutput("picks_table")
     )
   )
+)
 
+#############################################################
 # Server 
+#############################################################
 server <- function(input, output, session) {
   # Load data from Google Sheets 
   data <- reactiveVal(read_sheet(sheet_url)) 
   
+  # hide thank you text before button is pressed
+  thank_you_text <- reactiveVal((""))
+  
+  
   observeEvent(input$submit, { 
+    
+    
     new_entry <- tibble( Date = Sys.Date(), 
                          event_name = input$event_name, 
                          player_name = input$player_name, 
@@ -99,42 +122,72 @@ server <- function(input, output, session) {
     
     data(read_sheet(sheet_url)) 
     
+    # show message once submitted
+    thank_you_text("Picks submitted!")
+    
+    output$thank_you_msg <- 
+      renderText({thank_you_text()})
+    
     }) 
   
   observeEvent(input$update_data, 
                {
                
-               # Get earnings data for latest week only
+               showNotification("Scraping PGA earnings data...Please wait!", type = "message", duration = 2)
+                 
+                 # start progress bar
+                 updateProgressBar(session, id = "progress", value = 0)
+                 
+                    for (i in seq(1, 100, by = 10)){
+                      Sys.sleep(5)
+                      
+                      updateProgressBar(session, id = "progress", value = i)
+                    }
+                 
+               # Get earnings data
                # loop the web scraping function over all golfers selected for this week
-               all_golfers_selected <- data() %>% 
-                 filter(event_name == "Genesis Invitational") %>%
+               all_golfers_selected <- test %>%
                  select(golfer1, golfer2) %>%
                  pivot_longer(cols = c("golfer1", "golfer2")) %>%
+                 unique() %>%
                  pull()
+               
+               # get specific url for golfer
+               player_links <- scrape_top_200_payer_ids()
                 
                earnings_list <- list() 
                for(g in all_golfers_selected){
                  result <- scrape_pga_prize_money(g)
                  earnings_list[[g]] <- result
                }
-               earnings <- do.call(rbind, earnings_list) %>%
-                 mutate(event_name = "Genesis Invitational")
+               earnings <- do.call(rbind, earnings_list) 
                  
       
                # Update earnings 
-               df <- data() %>% 
+               df <- test %>% 
                  left_join(earnings, by = c("event_name", "golfer1" = "golfer_name")) %>%
                  mutate(earnings_g1 = earnings) %>%
                  select(-earnings) %>%
                  left_join(earnings, by = c("event_name", "golfer2" = "golfer_name")) %>%
                  mutate(earnings_g2 = earnings) %>%
-                 select(-earnings)
+                 select(-earnings) %>%
+                 replace_na(list(earnings_g1 = 0, earnings_g2 = 0))
                              
                              
                sheet_write(df, ss = sheet_url, sheet = "Sheet1") 
                
+               # remove duplicates: only keep latest picks for each player and event
+               df <- df %>%
+                 group_by(player_name, event_name) %>%
+                 slice_max(order_by = input_date, n = 1, with_ties = FALSE)
+               
                # Save updated data 
                data(df) 
+               
+               #simulate final scraped progress bar
+               showNotification("Scraping complete!...For any technical support please contact Rajeesh Masala pashwari naan Prescott",
+                                type = "message", 
+                                duration = 10)
                }
                ) 
   # Leaderboard 
@@ -173,4 +226,5 @@ server <- function(input, output, session) {
     ) 
   } 
 
-shinyApp(ui, server)
+# Add dependency file: his tells the cloud which version of R to use
+rsconnect::writeManifest()

@@ -10,7 +10,7 @@ library(readr)
 library(tidyverse)
 
 # authorize google sheet
-gs4_auth("google_sheets_service_account_key.json")
+gs4_auth(path = Sys.getenv("GCP_CREDENTIALS"))
 
 # Google sheet URL (this is where the weekly picks are stored)
 sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th9HNBumQSD13BhIXlI/edit?pli=1&gid=0#gid=0" 

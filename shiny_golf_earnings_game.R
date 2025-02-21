@@ -227,4 +227,4 @@ server <- function(input, output, session) {
   } 
 
 # Add dependency file: his tells the cloud which version of R to use
-rsconnect::writeManifest()
+#rsconnect::writeManifest()

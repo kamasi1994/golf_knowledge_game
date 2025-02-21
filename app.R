@@ -10,7 +10,7 @@ library(readr)
 library(tidyverse)
 
 # autorize google sheet
-# gs4_auth()
+gs4_auth(email = "conorprescott15@gmail.com")
 
 # Google sheet URL (this is where the weekly picks are stored)
 sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th9HNBumQSD13BhIXlI/edit?pli=1&gid=0#gid=0" 

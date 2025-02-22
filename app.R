@@ -207,7 +207,7 @@ server <- function(input, output, session) {
                data(df) 
                
                #simulate final scraped progress bar
-               showNotification("Scraping complete!...For any technical support please contact Rajeesh Masala pashwari naan Prescott",
+               showNotification("Scraping complete!...For any technical support please contact Rajeesh Masala Peshwari Naan Prescott",
                                 type = "message", 
                                 duration = 10)
                }

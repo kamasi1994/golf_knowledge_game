@@ -9,9 +9,15 @@ library(lubridate)
 library(readr)
 library(tidyverse)
 
-# Authenticate using the service account key from the environment variable
-gs4_auth(Sys.getenv("GOOGLE_SERVICE_ACCOUNT_KEY"))
+# Use a Google sevice account to allow remote editing of google sheets 
+# this is where data is stored for shiny app
 
+# Authenticate using the service account key from the environment variable
+json_path <- Sys.getenv("GOOGLE_SERVICE_ACCOUNT_KEY")
+
+# Authenticate using the service account credentials
+token <- gargle::credentials_service_account(path = Sys.getenv("GOOGLE_SERVICE_ACCOUNT_KEY"))
+gs4_auth(token = token)
 
 # Google sheet URL (this is where the weekly picks are stored)
 sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th9HNBumQSD13BhIXlI/edit?pli=1&gid=0#gid=0" 

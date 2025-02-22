@@ -248,7 +248,9 @@ server <- function(input, output, session) {
     ) 
 } 
 
-rsconnect::deployApp(appName = "name-of-app", appDir = "directory/where/my/app.R")
+shinyApp(ui = ui, server = server)
+
+# rsconnect::deployApp(appName = "name-of-app", appDir = "directory/where/my/app.R")
 
 # Add dependency file: his tells the cloud which version of R to use
-rsconnect::writeManifest()
+#rsconnect::writeManifest()

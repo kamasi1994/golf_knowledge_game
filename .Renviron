@@ -1,1 +1,2 @@
-GOOGLE_SERVICE_ACCOUNT_KEY = /cloud/project/service_key.json
+GOOGLE_SERVICE_ACCOUNT_KEY=/cloud/project/service_key.json
+

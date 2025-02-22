@@ -9,13 +9,20 @@ library(lubridate)
 library(readr)
 library(tidyverse)
 
-# authorize google sheet
-gs4_auth(path = Sys.getenv("GCP_CREDENTIALS"))
+# Authenticate using the service account key from the environment variable
+gs4_auth(path = Sys.getenv("GOOGLE_SERVICE_ACCOUNT_KEY"))
+
 
 # Google sheet URL (this is where the weekly picks are stored)
 sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th9HNBumQSD13BhIXlI/edit?pli=1&gid=0#gid=0" 
 
 test <- read_sheet(sheet_url)
+# 
+# jsonlines <- readLines("service_key.json")
+# jsonstring <- paste(jsonlines, collapse = "")
+# jsonstring <- gsub('"', '\\"', jsonstring)
+# cat(jsonstring)
+
 
 #############################################################
 # Necessary functions

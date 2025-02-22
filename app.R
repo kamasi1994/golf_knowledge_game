@@ -107,6 +107,7 @@ ui <- fluidPage(
       textInput("golfer2", "Golfer 2", ""), 
       actionButton("submit", "Submit Picks"),
       textOutput("thank_you_msg"),
+      hr(),
       div(style = "height: 30vh;"),
       actionButton("update_data", "Update Prize Money"),
       h5("Press this to get latest tournament prize money from the web..."),
@@ -114,8 +115,7 @@ ui <- fluidPage(
     mainPanel(plotOutput("leaderboard_plot"),
               hr(),
               plotOutput("time_series_plot"), 
-              hr(),
-              DTOutput("picks_table")
+              hr()
     )
   )
 )
@@ -168,7 +168,7 @@ server <- function(input, output, session) {
                  
                # Get earnings data
                # loop the web scraping function over all golfers selected for this week
-               all_golfers_selected <- test %>%
+               all_golfers_selected <- data() %>%
                  select(golfer1, golfer2) %>%
                  pivot_longer(cols = c("golfer1", "golfer2")) %>%
                  unique() %>%
@@ -186,7 +186,7 @@ server <- function(input, output, session) {
                  
       
                # Update earnings 
-               df <- test %>% 
+               df <- data() %>% 
                  left_join(earnings, by = c("event_name", "golfer1" = "golfer_name")) %>%
                  mutate(earnings_g1 = earnings) %>%
                  select(-earnings) %>%
@@ -240,12 +240,6 @@ server <- function(input, output, session) {
       theme_minimal() 
     }) 
   
-  # Weekly picks table
-  
-  output$picks_table <- renderDT({ 
-    datatable(data()) 
-    }
-    ) 
 } 
 
 shinyApp(ui = ui, server = server)

@@ -17,12 +17,21 @@ json_path <- Sys.getenv("GOOGLE_SERVICE_ACCOUNT_KEY")
 
 # Authenticate using the service account credentials
 token <- gargle::credentials_service_account(path = Sys.getenv("GOOGLE_SERVICE_ACCOUNT_KEY"))
-gs4_auth(token = token)
+
+scopes <- c(
+  "https://www.googleapis.com/auth/spreadsheets"  # Full access to sheets
+)
+
+# Authenticate with the service account and specify the scopes
+gs4_auth(
+  path = Sys.getenv("GOOGLE_SERVICE_ACCOUNT_KEY"),
+  scopes = scopes
+) 
+
 
 # Google sheet URL (this is where the weekly picks are stored)
 sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th9HNBumQSD13BhIXlI/edit?pli=1&gid=0#gid=0" 
 
-test <- read_sheet(sheet_url)
 # 
 # jsonlines <- readLines("service_key.json")
 # jsonstring <- paste(jsonlines, collapse = "")

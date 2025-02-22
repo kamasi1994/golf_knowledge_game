@@ -10,7 +10,7 @@ library(readr)
 library(tidyverse)
 
 # Authenticate using the service account key from the environment variable
-gs4_auth(path = Sys.getenv("GOOGLE_SERVICE_ACCOUNT_KEY"))
+gs4_auth(Sys.getenv("GOOGLE_SERVICE_ACCOUNT_KEY"))
 
 
 # Google sheet URL (this is where the weekly picks are stored)

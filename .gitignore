@@ -4,3 +4,4 @@
 .Ruserdata
 # Ignore the JSON key file
 service_key.json
+.Renviron

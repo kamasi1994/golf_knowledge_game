@@ -58,7 +58,7 @@ scrape_top_200_payer_ids <- function(){
 }
 
 # Function to scrape prize money data 
-scrape_pga_prize_money <- function(golfer_name) { 
+scrape_pga_prize_money <- function(golfer_name, player_links) { 
   
   # convert input golfer name to url style
   golfer_name_lower <- gsub(" ", "-", tolower(golfer_name))
@@ -179,7 +179,7 @@ server <- function(input, output, session) {
                 
                earnings_list <- list() 
                for(g in all_golfers_selected){
-                 result <- scrape_pga_prize_money(g)
+                 result <- scrape_pga_prize_money(g, player_links)
                  earnings_list[[g]] <- result
                }
                earnings <- do.call(rbind, earnings_list) 

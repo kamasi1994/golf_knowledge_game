@@ -197,32 +197,32 @@ server <- function(input, output, session) {
   output$conor_picks_table <- renderTable({
     data() %>%
       filter(player_name == "Conor",
-             earnings_g1 != 0,
-             earnings_g2 != 0) %>%
+             earnings_g1 == 0,
+             earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   })
   
   output$shane_picks_table <- renderTable({
     data() %>%
       filter(player_name == "Shane",
-             earnings_g1 != 0,
-             earnings_g2 != 0) %>%
+             earnings_g1 == 0,
+             earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   })
   
   output$sean_picks_table <- renderTable({
     data() %>%
       filter(player_name == "Sean",
-             earnings_g1 != 0,
-             earnings_g2 != 0) %>%
+             earnings_g1 == 0,
+             earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   })
   
   output$chris_picks_table <- renderTable({
     data() %>%
       filter(player_name == "Chris",
-             earnings_g1 != 0,
-             earnings_g2 != 0) %>%
+             earnings_g1 == 0,
+             earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   })
   

@@ -1,4 +1,5 @@
 library(shiny) 
+library(shinydashboard)
 library(shinyWidgets)
 library(rvest)
 library(dplyr) 
@@ -8,6 +9,7 @@ library(DT)
 library(lubridate)
 library(readr)
 library(tidyverse)
+library(highcharter)
 
 # Use a Google sevice account to allow remote editing of google sheets 
 # this is where data is stored for shiny app
@@ -96,26 +98,86 @@ event_list <- read_csv("data/events.csv")$event_name
 #############################################################
 # UI 
 #############################################################
-ui <- fluidPage( 
-  titlePanel("Golf Knowledge: 2025 Season Earnings Game"), 
-  sidebarLayout( 
-    sidebarPanel("Enter tournament picks:",
-      hr(),           
-      selectInput("event_name", "Tournament", choices = event_list), 
-      selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris")), 
-      textInput("golfer1", "Golfer 1", ""), 
-      textInput("golfer2", "Golfer 2", ""), 
+ui <- dashboardPage(
+  
+  # Dashboard header
+  dashboardHeader(title = "Golf Knowledge: 2025 Season Earnings Game", titleWidth = 450),
+  
+  # Dashboard sidebar
+  dashboardSidebar(width = 350,
+    tags$div(
+      style = "padding: 15px;",
+      "Enter tournament picks:",
+      hr(),
+      selectInput("event_name", "Tournament", choices = event_list),
+      selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris")),
+      textInput("golfer1", "Golfer 1", ""),
+      textInput("golfer2", "Golfer 2", ""),
       actionButton("submit", "Submit Picks"),
       textOutput("thank_you_msg"),
       hr(),
-      div(style = "height: 30vh;"),
+      div(style = "height: 20vh;"),
       actionButton("update_data", "Update Prize Money"),
       h5("Press this to get latest tournament prize money from the web..."),
-      progressBar(id = "progress", value = 0, total = 100, display_pct = TRUE)),
-    mainPanel(plotOutput("leaderboard_plot"),
-              hr(),
-              plotOutput("time_series_plot"), 
-              hr()
+      progressBar(id = "progress", value = 0, total = 100, display_pct = TRUE)
+    )
+  ),
+  
+  # Dashboard body
+  dashboardBody(
+    # Add custom CSS to change sidebar color
+    tags$head(tags$style(HTML('
+      .main-header .logo {
+        font-family: "Georgia", Times, "Times New Roman", serif;
+        font-weight: bold;
+        font-size: 24px;
+      }
+    '))),
+    
+    fluidRow(
+      # Collapsible boxes for each player's picks
+      box(
+        title = "Conor's Picks",
+        status = "primary",
+        solidHeader = TRUE,
+        collapsible = TRUE,
+        tableOutput("conor_picks_table")
+      ),
+      box(
+        title = "Shane's Picks",
+        status = "success",
+        solidHeader = TRUE,
+        collapsible = TRUE,
+        tableOutput("shane_picks_table")
+      ),
+      box(
+        title = "Sean's Picks",
+        status = "warning",
+        solidHeader = TRUE,
+        collapsible = TRUE,
+        tableOutput("sean_picks_table")
+      ),
+      box(
+        title = "Chris's Picks",
+        status = "danger",
+        solidHeader = TRUE,
+        collapsible = TRUE,
+        tableOutput("chris_picks_table")
+      )
+    ),
+    fluidRow(
+      box(
+        title = "Leaderboard",
+        status = "primary",
+        solidHeader = TRUE,
+        highchartOutput("leaderboard_plot")
+      ),
+      box(
+        title = "Time Series",
+        status = "primary",
+        solidHeader = TRUE,
+        highchartOutput("time_series_plot")
+      )
     )
   )
 )
@@ -129,6 +191,41 @@ server <- function(input, output, session) {
   
   # hide thank you text before button is pressed
   thank_you_text <- reactiveVal((""))
+
+  
+  # Render tables for each player's picks
+  output$conor_picks_table <- renderTable({
+    data() %>%
+      filter(player_name == "Conor",
+             earnings_g1 != 0,
+             earnings_g2 != 0) %>%
+      select(event_name, golfer1, golfer2)
+  })
+  
+  output$shane_picks_table <- renderTable({
+    data() %>%
+      filter(player_name == "Shane",
+             earnings_g1 != 0,
+             earnings_g2 != 0) %>%
+      select(event_name, golfer1, golfer2)
+  })
+  
+  output$sean_picks_table <- renderTable({
+    data() %>%
+      filter(player_name == "Sean",
+             earnings_g1 != 0,
+             earnings_g2 != 0) %>%
+      select(event_name, golfer1, golfer2)
+  })
+  
+  output$chris_picks_table <- renderTable({
+    data() %>%
+      filter(player_name == "Chris",
+             earnings_g1 != 0,
+             earnings_g2 != 0) %>%
+      select(event_name, golfer1, golfer2)
+  })
+  
   
   
   observeEvent(input$submit, { 
@@ -213,31 +310,40 @@ server <- function(input, output, session) {
                }
                ) 
   # Leaderboard 
-  output$leaderboard_plot <- renderPlot({ 
+  output$leaderboard_plot <- renderHighchart({ 
     df <- data() %>% 
       group_by(player_name) %>% 
-      summarise(TotalEarnings = sum(earnings_g1, na.rm = TRUE)) %>% 
-      arrange(desc(TotalEarnings)) 
+      summarise(Total_Earnings = sum(earnings_g1 + earnings_g2, na.rm = TRUE)) %>% 
+      arrange(desc(Total_Earnings)) 
     
-    ggplot(df, aes(x = reorder(player_name, TotalEarnings), y = TotalEarnings)) + 
-      geom_bar(stat = "identity", fill = "blue") + 
-      coord_flip() + 
-      labs(title = "Leaderboard", x = "Player", y = "Total Earnings") + 
-      theme_minimal() 
+    hchart(df, "column", 
+           hcaes(x = player_name, y = Total_Earnings, group = player_name)) %>%
+      hc_title(text = "Total") %>%
+      hc_xAxis(title = list(text = "Player")) %>%
+      hc_yAxis(title = list(text = "Earnings")) %>%
+      hc_plotOptions(column = list(
+        stacking = "normal"
+      ))
     }
     ) 
   
   # Time series plot 
-  output$time_series_plot <- renderPlot({ 
+  output$time_series_plot <- renderHighchart({ 
     df <- data() %>%
-      group_by(event_name, player_name) %>% 
-      summarise(TotalEarnings = sum(earnings_g1, na.rm = TRUE)) 
+      left_join(read.csv("data/events.csv"), by = "event_name") %>%
+      group_by(order, event_name, player_name) %>% 
+      summarise(TotalEarnings = sum(earnings_g1 +earnings_g2, na.rm = TRUE)) %>%
+      filter(TotalEarnings > 0) %>%
+      arrange(order) %>%
+      mutate(event_name = factor(event_name, levels = unique(event_name))) 
     
-    ggplot(df, aes(x = event_name, y = TotalEarnings, color = player_name, group = player_name)) +
-      geom_line() + 
-      geom_point() + 
-      labs(title = "Earnings Over Time", x = "Date", y = "Total Earnings") + 
-      theme_minimal() 
+    hchart(df, "line", 
+           hcaes(x = event_name, y = TotalEarnings, group = player_name, color = player_name)) %>%
+      hc_title(text = "Earnings Over Time") %>%
+      hc_xAxis(title = list(text = "Event")) %>%
+      hc_yAxis(title = list(text = "Total Earnings")) %>%
+      hc_plotOptions(line = list(marker = list(enabled = TRUE))) %>%
+      hc_tooltip(shared = TRUE, valueSuffix = " $") 
     }) 
   
 } 

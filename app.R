@@ -104,7 +104,7 @@ ui <- dashboardPage(
   dashboardHeader(title = "Golf Knowledge: 2025 Season Earnings Game", titleWidth = 450),
   
   # Dashboard sidebar
-  dashboardSidebar(width = 350,
+  dashboardSidebar(width = 200,
     tags$div(
       style = "padding: 15px;",
       "Enter tournament picks:",
@@ -196,6 +196,8 @@ server <- function(input, output, session) {
   # Render tables for each player's picks
   output$conor_picks_table <- renderTable({
     data() %>%
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       filter(player_name == "Conor",
              earnings_g1 == 0,
              earnings_g2 == 0) %>%
@@ -204,6 +206,8 @@ server <- function(input, output, session) {
   
   output$shane_picks_table <- renderTable({
     data() %>%
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       filter(player_name == "Shane",
              earnings_g1 == 0,
              earnings_g2 == 0) %>%
@@ -212,6 +216,8 @@ server <- function(input, output, session) {
   
   output$sean_picks_table <- renderTable({
     data() %>%
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       filter(player_name == "Sean",
              earnings_g1 == 0,
              earnings_g2 == 0) %>%
@@ -220,6 +226,8 @@ server <- function(input, output, session) {
   
   output$chris_picks_table <- renderTable({
     data() %>%
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       filter(player_name == "Chris",
              earnings_g1 == 0,
              earnings_g2 == 0) %>%

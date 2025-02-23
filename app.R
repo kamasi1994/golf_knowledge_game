@@ -198,6 +198,7 @@ server <- function(input, output, session) {
     data() %>%
       group_by(player_name, event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
       filter(player_name == "Conor",
              earnings_g1 == 0,
              earnings_g2 == 0) %>%
@@ -208,6 +209,7 @@ server <- function(input, output, session) {
     data() %>%
       group_by(player_name, event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
       filter(player_name == "Shane",
              earnings_g1 == 0,
              earnings_g2 == 0) %>%
@@ -218,6 +220,7 @@ server <- function(input, output, session) {
     data() %>%
       group_by(player_name, event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
       filter(player_name == "Sean",
              earnings_g1 == 0,
              earnings_g2 == 0) %>%
@@ -228,6 +231,7 @@ server <- function(input, output, session) {
     data() %>%
       group_by(player_name, event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
       filter(player_name == "Chris",
              earnings_g1 == 0,
              earnings_g2 == 0) %>%

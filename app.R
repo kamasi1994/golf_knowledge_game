@@ -252,25 +252,25 @@ ui <- dashboardPage(
         ),
         fluidRow(
           box(
-            title = "Leaderboard",
+            title = "",
             status = "primary",
             solidHeader = TRUE,
             highchartOutput("leaderboard_plot")
           ),
           box(
-            title = "Time Series",
+            title = "",
             status = "primary",
             solidHeader = TRUE,
             highchartOutput("time_series_plot")
           ),
           box(
-            title = "Cumulative Earnings",
+            title = "",
             status = "primary",
             solidHeader = TRUE,
             highchartOutput("cumulative_plot")
           ),
           box(
-            title = "Top 3",
+            title = "",
             status = "primary",
             solidHeader = TRUE,
             highchartOutput("top_3_plot")
@@ -283,7 +283,6 @@ ui <- dashboardPage(
       #################
       tabItem(
         tabName = "game_rules",
-        h2("Golf Knowledge: Earnings Game 2025"),
         tags$ul(
           h3("Game rules:"),
           tags$li("€50 entry"),

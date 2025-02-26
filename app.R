@@ -148,28 +148,36 @@ ui <- dashboardPage(
     fluidRow(
       # Collapsible boxes for each player's picks
       box(
-        title = "Conor's Picks",
+        title = tagList(
+          img(src = "conor.jfif", height = "30px"),
+          "Conor's Picks"),
         status = "primary",
         solidHeader = TRUE,
         collapsible = TRUE,
         tableOutput("conor_picks_table")
       ),
       box(
-        title = "Shane's Picks",
+        title = tagList(
+          img(src = "shane.jfif", height = "30px"),
+          "Shanes's Picks"),
         status = "success",
         solidHeader = TRUE,
         collapsible = TRUE,
         tableOutput("shane_picks_table")
       ),
       box(
-        title = "Sean's Picks",
+        title = tagList(
+          img(src = "sean.jfif", height = "30px"),
+          "Seans's Picks"),
         status = "warning",
         solidHeader = TRUE,
         collapsible = TRUE,
         tableOutput("sean_picks_table")
       ),
       box(
-        title = "Chris's Picks",
+        title = tagList(
+          img(src = "chris.jfif", height = "30px"),
+          "Chris's Picks"),
         status = "danger",
         solidHeader = TRUE,
         collapsible = TRUE,

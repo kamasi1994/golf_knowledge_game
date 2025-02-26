@@ -149,7 +149,7 @@ ui <- dashboardPage(
       # Collapsible boxes for each player's picks
       box(
         title = tagList(
-          img(src = "conor.jfif", height = "30px"),
+          img(src = "conor.jfif", height = "50px"),
           "Conor's Picks"),
         status = "primary",
         solidHeader = TRUE,
@@ -158,7 +158,7 @@ ui <- dashboardPage(
       ),
       box(
         title = tagList(
-          img(src = "shane.jfif", height = "30px"),
+          img(src = "shane.jfif", height = "50px"),
           "Shanes's Picks"),
         status = "success",
         solidHeader = TRUE,
@@ -167,7 +167,7 @@ ui <- dashboardPage(
       ),
       box(
         title = tagList(
-          img(src = "sean.jfif", height = "30px"),
+          img(src = "sean.jfif", height = "50px"),
           "Seans's Picks"),
         status = "warning",
         solidHeader = TRUE,
@@ -176,7 +176,7 @@ ui <- dashboardPage(
       ),
       box(
         title = tagList(
-          img(src = "chris.jfif", height = "30px"),
+          img(src = "chris.jfif", height = "50px"),
           "Chris's Picks"),
         status = "danger",
         solidHeader = TRUE,

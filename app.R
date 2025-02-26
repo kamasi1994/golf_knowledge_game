@@ -115,7 +115,7 @@ ui <- dashboardPage(
       "Enter tournament picks:",
       hr(),
       selectInput("event_name", "Tournament", choices = event_list),
-      selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris")),
+      selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris", "Phil")),
       selectizeInput(inputId = "golfer1",
                      label = "Golfer 1", 
                      choices = read.csv("data/datagolf_rankingsFEB2025.csv")$player_name,
@@ -149,7 +149,7 @@ ui <- dashboardPage(
       # Collapsible boxes for each player's picks
       box(
         title = tagList(
-          img(src = "conor.jfif", height = "50px"),
+          img(src = "conor.jfif", height = "60px"),
           "Conor's Picks"),
         status = "primary",
         solidHeader = TRUE,
@@ -158,7 +158,7 @@ ui <- dashboardPage(
       ),
       box(
         title = tagList(
-          img(src = "shane.jfif", height = "50px"),
+          img(src = "shane.jfif", height = "60px"),
           "Shanes's Picks"),
         status = "success",
         solidHeader = TRUE,
@@ -167,7 +167,7 @@ ui <- dashboardPage(
       ),
       box(
         title = tagList(
-          img(src = "sean.jfif", height = "50px"),
+          img(src = "sean.jfif", height = "60px"),
           "Seans's Picks"),
         status = "warning",
         solidHeader = TRUE,
@@ -176,12 +176,21 @@ ui <- dashboardPage(
       ),
       box(
         title = tagList(
-          img(src = "chris.jfif", height = "50px"),
+          img(src = "chris.jfif", height = "60px"),
           "Chris's Picks"),
         status = "danger",
         solidHeader = TRUE,
         collapsible = TRUE,
         tableOutput("chris_picks_table")
+      ),
+      box(
+        title = tagList(
+          img(src = "phil.jfif", height = "60px"),
+          "Phil's Picks"),
+        status = "primary",
+        solidHeader = TRUE,
+        collapsible = TRUE,
+        tableOutput("phil_picks_table")
       )
     ),
     fluidRow(
@@ -252,6 +261,17 @@ server <- function(input, output, session) {
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
       filter(player_name == "Chris",
+             earnings_g1 == 0,
+             earnings_g2 == 0) %>%
+      select(event_name, golfer1, golfer2)
+  }, colnames = FALSE)
+  
+  output$phil_picks_table <- renderTable({
+    data() %>%
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      filter(player_name == "Phil",
              earnings_g1 == 0,
              earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)

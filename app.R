@@ -401,9 +401,15 @@ server <- function(input, output, session) {
                                 duration = 10)
                }
                ) 
+  ####
   # Leaderboard 
+  ####
   output$leaderboard_plot <- renderHighchart({ 
     df <- data() %>% 
+      # only use latest pick per player / tournament
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
       group_by(player_name) %>% 
       summarise(Total_Earnings = sum(earnings_g1 + earnings_g2, na.rm = TRUE)) %>% 
       arrange(desc(Total_Earnings)) 
@@ -418,11 +424,17 @@ server <- function(input, output, session) {
       ))
     }
     ) 
-  
+  ####
   # Time series plot 
+  ####
   output$time_series_plot <- renderHighchart({ 
     df <- data() %>%
-      filter(event_occured) %>% # only show data for events that have occurred
+      # only use latest pick per player / tournament
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      # only show data for events that have occurred
+      filter(event_occured) %>% 
       left_join(read.csv("data/events_test.csv"), by = "event_name") %>%
       group_by(order, event_name, player_name) %>% 
       summarise(TotalEarnings = sum(earnings_g1 +earnings_g2, na.rm = TRUE)) %>%
@@ -439,10 +451,16 @@ server <- function(input, output, session) {
       hc_tooltip(shared = TRUE, valueSuffix = " $") 
     }) 
   
+  ####
   # cumulative earnings time series plot
+  ####
   output$cumulative_plot <- renderHighchart({
   df <- data() %>%
-    filter(event_occured) %>% # only show data for events that have occurred
+    # only use latest pick per player / tournament
+    group_by(player_name, event_name) %>%
+    slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+    # only show data for events that have occurred
+    filter(event_occured) %>% 
     left_join(read.csv("data/events_test.csv"), by = "event_name") %>%
     group_by(order, event_name, player_name) %>% 
     summarise(TotalEarnings = sum(earnings_g1 +earnings_g2, na.rm = TRUE)) %>%
@@ -462,6 +480,44 @@ server <- function(input, output, session) {
       hc_plotOptions(line = list(marker = list(enabled = TRUE))) %>%
       hc_tooltip(shared = TRUE, valueSuffix = " $")
     })
+  
+  ####
+  # TOP 3
+  ####
+  output$top_3_plot <- renderHighchart({
+  df <- data() %>%
+    # only look at events that have been played
+    filter(event_occured) %>%
+    # only use latest pick per player / tournament
+    group_by(player_name, event_name) %>%
+    slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+    mutate(event_pick_g1 = paste(golfer1, "@", event_name),
+           event_pick_g2 = paste(golfer2, "@", event_name)) %>%
+    ungroup() %>%
+    select(player_name, event_pick_g1, event_pick_g2, earnings_g1, earnings_g2) %>%
+    pivot_longer(
+      cols = starts_with("event_pick") | starts_with("earnings"),
+      names_to = c(".value", "game"),
+      names_sep = "_g"
+    ) %>%
+    group_by(player_name) %>%
+    slice_max(order_by = earnings, n = 3, with_ties = FALSE) %>%
+    arrange(desc(earnings), .by_group = TRUE) %>%
+    ungroup() %>%
+    mutate(event_pick = factor(event_pick, levels = unique(event_pick))) 
+  
+  
+  hchart(df, "bar", hcaes(x = player_name, y = earnings, group = event_pick)) %>%
+    hc_chart(inverted = TRUE) %>%  # Make the chart horizontal
+    hc_xAxis(title = list(text = "Player Name")) %>%
+    hc_yAxis(title = list(text = "Earnings")) %>%
+    hc_title(text = "Top 3 picks") %>%
+    hc_tooltip(
+      pointFormat = "<b>{point.event_pick}</b><br>Earnings: ${point.y:,.0f}"
+    ) %>%
+    hc_legend(enabled = FALSE) %>%
+    hc_plotOptions(bar = list(dataLabels = list(enabled = TRUE, format = "${point.y:,.0f}")))
+  })        
 } 
 
 shinyApp(ui = ui, server = server)

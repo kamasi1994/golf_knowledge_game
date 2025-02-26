@@ -110,7 +110,8 @@ ui <- dashboardPage(
     title = tags$span(
       tags$img(src = "pga.png", height = "40px", style = "margin-right: 10px;"),  # First logo
       tags$img(src = "pif.png", height = "40px", style = "margin-right: 20px;"),  # Second logo
-      "Golf Knowledge: 2025 Season Earnings Game"  # Title
+      "Golf Knowledge: 2025 Season Earnings Game",  # Title
+      tags$img(src = "baboost.png", height = "40px", style = "margin-right: 20px;") # third logo
     ),
     titleWidth = 800 
   ),
@@ -264,9 +265,9 @@ ui <- dashboardPage(
           tags$li("You can pick players in advance"),
           tags$li("You can only pick each player once throughout the season"),
           tags$li("Winner will be the player with the most earnings at the end of the season (after Tour Championship)"),
-          tags$li("€200 for winner"),
+          tags$li("€250 for winner"),
           tags$li("€50 for second place (money back)"),
-          h2("Sponsers:"),
+          h2("Sponsors:"),
           tags$img(src = "baboost.jfif"),
           tags$img(src = "referhop.png"),
           tags$img(src = "pif.png", height="50%", width="50%")

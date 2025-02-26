@@ -226,6 +226,12 @@ ui <- dashboardPage(
             status = "primary",
             solidHeader = TRUE,
             highchartOutput("cumulative_plot")
+          ),
+          box(
+            title = "Top 3",
+            status = "primary",
+            solidHeader = TRUE,
+            highchartOutput("top_3_plot")
           )
         )
       ),

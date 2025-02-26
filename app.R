@@ -109,28 +109,12 @@ ui <- dashboardPage(
   dashboardHeader(title = "Golf Knowledge: 2025 Season Earnings Game", titleWidth = 450),
   
   # Dashboard sidebar
-  dashboardSidebar(width = 200,
-    tags$div(
-      style = "padding: 15px;",
-      "Enter tournament picks:",
-      hr(),
-      selectInput("event_name", "Tournament", choices = event_list),
-      selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris", "Phil")),
-      selectizeInput(inputId = "golfer1",
-                     label = "Golfer 1", 
-                     choices = read.csv("data/datagolf_rankingsFEB2025.csv")$player_name,
-                     options = list(placeholder = 'Type to search...', maxOptions = 10)),
-      selectizeInput(inputId = "golfer2",
-                     label = "Golfer 2", 
-                     choices = read.csv("data/datagolf_rankingsFEB2025.csv")$player_name,
-                     options = list(placeholder = 'Type to search...', maxOptions = 10)),
-      actionButton("submit", "Submit Picks"),
-      textOutput("thank_you_msg"),
-      hr(),
-      div(style = "height: 20vh;"),
-      actionButton("update_data", "Update Prize Money"),
-      h5("Press this to get latest tournament prize money from the web..."),
-      progressBar(id = "progress", value = 0, total = 100, display_pct = TRUE)
+  dashboardSidebar(
+    width = 200,
+    sidebarMenu(
+      menuItem("Enter Picks", tabName = "picks", icon = icon("user")),
+      menuItem("Dashboard", tabName = "main", icon = icon("dashboard")),
+      menuItem("Game Rules", tabName = "game_rules", icon = icon("info-circle"))
     )
   ),
   
@@ -145,71 +129,118 @@ ui <- dashboardPage(
       }
     '))),
     
-    fluidRow(
-      # Collapsible boxes for each player's picks
-      box(
-        title = tagList(
-          img(src = "conor.jfif", height = "60px"),
-          "Conor's Picks"),
-        status = "primary",
-        solidHeader = TRUE,
-        collapsible = TRUE,
-        tableOutput("conor_picks_table")
+    tabItems(
+      #################
+      # Picks tab
+      #################
+      tabItem(
+        tabName = "picks",
+        h1("Enter tournament picks:"),
+        selectInput("event_name", "Tournament", choices = event_list),
+        selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris", "Phil")),
+        selectizeInput(inputId = "golfer1",
+                       label = "Golfer 1", 
+                       choices = read.csv("data/datagolf_rankingsFEB2025.csv")$player_name,
+                       options = list(placeholder = 'Type to search...', maxOptions = 10)),
+        selectizeInput(inputId = "golfer2",
+                       label = "Golfer 2", 
+                       choices = read.csv("data/datagolf_rankingsFEB2025.csv")$player_name,
+                       options = list(placeholder = 'Type to search...', maxOptions = 10)),
+        actionButton("submit", "Submit Picks"),
+        textOutput("thank_you_msg"),
+        hr(),
+        div(style = "height: 20vh;"),
+        actionButton("update_data", "Update Prize Money"),
+        h5("Press this to get latest tournament prize money from the web..."),
+        progressBar(id = "progress", value = 0, total = 100, display_pct = TRUE)
       ),
-      box(
-        title = tagList(
-          img(src = "shane.jfif", height = "60px"),
-          "Shanes's Picks"),
-        status = "success",
-        solidHeader = TRUE,
-        collapsible = TRUE,
-        tableOutput("shane_picks_table")
+
+      #################
+      # Main dashboard tab
+      #################
+      tabItem(
+        tabName = "main",
+        fluidRow(
+          # Collapsible boxes for each player's picks
+          box(
+            title = tagList(
+              img(src = "conor.jfif", height = "60px"),
+              "Conor's Picks"),
+            status = "primary",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            tableOutput("conor_picks_table")
+          ),
+          box(
+            title = tagList(
+              img(src = "shane.jfif", height = "60px"),
+              "Shane's Picks"),
+            status = "success",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            tableOutput("shane_picks_table")
+          ),
+          box(
+            title = tagList(
+              img(src = "sean.jfif", height = "60px"),
+              "Sean's Picks"),
+            status = "warning",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            tableOutput("sean_picks_table")
+          ),
+          box(
+            title = tagList(
+              img(src = "chris.jfif", height = "60px"),
+              "Chris's Picks"),
+            status = "danger",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            tableOutput("chris_picks_table")
+          ),
+          box(
+            title = tagList(
+              img(src = "phil.jfif", height = "60px"),
+              "Phil's Picks"),
+            status = "primary",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            tableOutput("phil_picks_table")
+          )
+        ),
+        fluidRow(
+          box(
+            title = "Leaderboard",
+            status = "primary",
+            solidHeader = TRUE,
+            highchartOutput("leaderboard_plot")
+          ),
+          box(
+            title = "Time Series",
+            status = "primary",
+            solidHeader = TRUE,
+            highchartOutput("time_series_plot")
+          )
+        )
       ),
-      box(
-        title = tagList(
-          img(src = "sean.jfif", height = "60px"),
-          "Seans's Picks"),
-        status = "warning",
-        solidHeader = TRUE,
-        collapsible = TRUE,
-        tableOutput("sean_picks_table")
-      ),
-      box(
-        title = tagList(
-          img(src = "chris.jfif", height = "60px"),
-          "Chris's Picks"),
-        status = "danger",
-        solidHeader = TRUE,
-        collapsible = TRUE,
-        tableOutput("chris_picks_table")
-      ),
-      box(
-        title = tagList(
-          img(src = "phil.jfif", height = "60px"),
-          "Phil's Picks"),
-        status = "primary",
-        solidHeader = TRUE,
-        collapsible = TRUE,
-        tableOutput("phil_picks_table")
-      )
-    ),
-    fluidRow(
-      box(
-        title = "Leaderboard",
-        status = "primary",
-        solidHeader = TRUE,
-        highchartOutput("leaderboard_plot")
-      ),
-      box(
-        title = "Time Series",
-        status = "primary",
-        solidHeader = TRUE,
-        highchartOutput("time_series_plot")
+      
+      #################
+      # Game Rules Tab
+      #################
+      tabItem(
+        tabName = "game_rules",
+        h2("Game Rules"),
+        tags$ul(
+          tags$li("€50 entry."),
+          tags$li("You must pick two players for each tournament."),
+          tags$li("You can pick players in advance."),
+          tags$li("You can only pick each player once throughout the season."),
+          tags$li("Winner will be the player with the most earnings at the end of the season (after Tour Championship).")
+        )
       )
     )
   )
 )
-
 #############################################################
 # Server 
 #############################################################

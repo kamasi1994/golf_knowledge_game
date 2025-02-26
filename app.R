@@ -99,22 +99,29 @@ update_google_sheet <- function(new_data) {
 
 event_list <- read_csv("data/events_test.csv")$event_name
 
-
+masters_theme <- create_theme(
+  adminlte_color(
+    light_blue = "#004D40", # Change the primary color to Masters Green
+  ),
+  adminlte_sidebar(
+    dark_bg = "#004D40",    # Sidebar background color
+    dark_hover_bg = "#00332A" # Sidebar hover color
+  ),
+  adminlte_global(
+    content_bg = "#FFFFFF"  # Background color for the content area
+  )
+)
 #############################################################
 # UI 
 #############################################################
 ui <- dashboardPage(
-  
+ 
   # Dashboard header
   dashboardHeader(
     title = tags$span(
-      tags$img(src = "pga.png", height = "40px", style = "margin-right: 10px;"),  # First logo
-      tags$img(src = "pif.png", height = "40px", style = "margin-right: 20px;"),  # Second logo
-      "Golf Knowledge: 2025 Season Earnings Game",  # Title
-      tags$img(src = "baboost.png", height = "40px", style = "margin-right: 20px;") # third logo
-    ),
-    titleWidth = 800 
-  ),
+      tags$img(src = "pif.png", height = "30px", style = "margin-right: 30px;"),
+      tags$img(src = "pga.png", height = "30px", style = "margin-right: 30px;")
+  )),
   
   # Dashboard sidebar
   dashboardSidebar(
@@ -128,14 +135,31 @@ ui <- dashboardPage(
   
   # Dashboard body
   dashboardBody(
+    # apply master green to background
+    use_theme(masters_theme),
     # Add custom CSS to change sidebar color
-    tags$head(tags$style(HTML('
-      .main-header .logo {
-        font-family: "Georgia", Times, "Times New Roman", serif;
-        font-weight: bold;
-        font-size: 24px;
+    tags$head(
+      tags$style(HTML("
+        /* Change the box header color to Masters Yellow */
+        .box.box-solid.box-primary > .box-header {
+          background-color: #A5D6A7;
+          color: #000000; /* Text color for the box header */
+        }
+        /* Change the box border color to Masters Yellow */
+        .box.box-solid.box-primary {
+          border: 1px solid #A5D6A7;
+        }
+      ")),
+      tags$style(HTML("
+      .circle-image {
+        border-radius: 50%; /* Makes the image circular */
+        width: 50px;       /* Adjust the width to make the image smaller */
+        height: 50px;      /* Adjust the height to make the image smaller */
+        object-fit: cover; /* Ensures the image covers the circular area */
+        margin: 5px;       /* Adds some spacing between images */
       }
-    '))),
+    "))
+    ),
     
     tabItems(
       #################
@@ -172,7 +196,7 @@ ui <- dashboardPage(
           # Collapsible boxes for each player's picks
           box(
             title = tagList(
-              img(src = "conor.jfif", height = "60px"),
+              img(src = "conor.jfif", height = "60px", class = "circle-image"),
               "Conor's Picks"),
             status = "primary",
             solidHeader = TRUE,
@@ -181,43 +205,43 @@ ui <- dashboardPage(
           ),
           box(
             title = tagList(
-              img(src = "shane.jfif", height = "60px"),
+              img(src = "shane.jfif", height = "60px", class = "circle-image"),
               "Shane's Picks"),
-            status = "success",
+            status = "primary",
             solidHeader = TRUE,
             collapsible = TRUE,
             tableOutput("shane_picks_table")
           ),
           box(
             title = tagList(
-              img(src = "sean.jfif", height = "60px"),
+              img(src = "sean.jfif", height = "60px", class = "circle-image"),
               "Sean's Picks"),
-            status = "warning",
+            status = "primary",
             solidHeader = TRUE,
             collapsible = TRUE,
             tableOutput("sean_picks_table")
           ),
           box(
             title = tagList(
-              img(src = "chris.jfif", height = "60px"),
+              img(src = "chris.jfif", height = "60px", class = "circle-image"),
               "Chris's Picks"),
-            status = "danger",
+            status = "primary",
             solidHeader = TRUE,
             collapsible = TRUE,
             tableOutput("chris_picks_table")
           ),
           box(
             title = tagList(
-              img(src = "eddie.jfif", height = "60px"),
+              img(src = "eddie.jfif", height = "60px", class = "circle-image"),
               "Eddie's Picks"),
-            status = "danger",
+            status = "primary",
             solidHeader = TRUE,
             collapsible = TRUE,
             tableOutput("eddie_picks_table")
           ),
           box(
             title = tagList(
-              img(src = "phil.jfif", height = "60px"),
+              img(src = "phil.jfif", height = "60px", class = "circle-image"),
               "Phil's Picks"),
             status = "primary",
             solidHeader = TRUE,
@@ -258,8 +282,9 @@ ui <- dashboardPage(
       #################
       tabItem(
         tabName = "game_rules",
-        h2("Game Rules"),
+        h2("Golf Knowledge: Earnings Game 2025"),
         tags$ul(
+          h3("Game rules:"),
           tags$li("€50 entry"),
           tags$li("You must pick two players for each tournament"),
           tags$li("You can pick players in advance"),
@@ -270,7 +295,8 @@ ui <- dashboardPage(
           h2("Sponsors:"),
           tags$img(src = "baboost.jfif"),
           tags$img(src = "referhop.png"),
-          tags$img(src = "pif.png", height="50%", width="50%")
+          tags$img(src = "pif.png", height="50%", width="50%"),
+          tags$img(src = "pga.png", height="50%", width="50%")
         )
       )
     )

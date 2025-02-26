@@ -106,7 +106,14 @@ event_list <- read_csv("data/events_test.csv")$event_name
 ui <- dashboardPage(
   
   # Dashboard header
-  dashboardHeader(title = "Golf Knowledge: 2025 Season Earnings Game", titleWidth = 450),
+  dashboardHeader(
+    title = tags$span(
+      tags$img(src = "pga.png", height = "40px", style = "margin-right: 10px;"),  # First logo
+      tags$img(src = "pif.png", height = "40px", style = "margin-right: 20px;"),  # Second logo
+      "Golf Knowledge: 2025 Season Earnings Game"  # Title
+    ),
+    titleWidth = 800 
+  ),
   
   # Dashboard sidebar
   dashboardSidebar(

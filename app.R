@@ -3,9 +3,9 @@ library(shinydashboard)
 library(shinyWidgets)
 library(rvest)
 library(dplyr) 
+library(DT)
 library(ggplot2)
 library(googlesheets4)
-library(DT)
 library(lubridate)
 library(readr)
 library(tidyverse)
@@ -40,33 +40,38 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th
 # jsonstring <- gsub('"', '\\"', jsonstring)
 # cat(jsonstring)
 
-
+# test <- read_sheet(sheet_url)
 #############################################################
 # Necessary functions
 #############################################################
 
 # Function to get the Player ID's of the top 200 golfers (needed to scrape earnings data on espn.com)
-scrape_top_200_payer_ids <- function(){
-  
-  # get urls for top 200 players in world
-  top_200_page <- read_html("https://www.espn.com/golf/rankings")
-  
-  player_links <- top_200_page %>%
-    html_nodes(".AnchorLink") %>%
-    html_attr("href") %>%
-    .[grepl("/golf/player/_/id/", .)]
-  
-  return(player_links)
-}
+# no longer needed as a csv file has been created containinng urls for the data golf rankings top players
+# I did this due to the many incorrect spelling names in espn urls, so a function with a player name as the input didnt work all the time
+# scrape_top_200_payer_ids <- function(){
+#   
+#   # get urls for top 200 players in world
+#   top_200_page <- read_html("https://www.espn.com/golf/rankings")
+#   
+#   player_links <- top_200_page %>%
+#     html_nodes(".AnchorLink") %>%
+#     html_attr("href") %>%
+#     .[grepl("/golf/player/_/id/", .)]
+#   
+#   return(player_links)
+# }
 
 # Function to scrape prize money data 
-scrape_pga_prize_money <- function(golfer_name, player_links) { 
+scrape_pga_prize_money <- function(golfer_name) { 
   
-  # convert input golfer name to url style
-  golfer_name_lower <- gsub(" ", "-", tolower(golfer_name))
+  # find player name in player url file (player_urls.csv)
+  # this has the espn.com urls for the top 300 players according to data golf (so includes liv players)
+  player_link <- read.csv("data/player_urls.csv") %>%
+    filter(dg_ranking_name == golfer_name) %>%
+    select(url) %>%
+    pull()
   
   # read the player page on espn.com
-  player_link <- player_links[grepl(golfer_name_lower, player_links)]
   player_page <- read_html(player_link)
   
   # get earnings data for this player
@@ -111,8 +116,14 @@ ui <- dashboardPage(
       hr(),
       selectInput("event_name", "Tournament", choices = event_list),
       selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris")),
-      textInput("golfer1", "Golfer 1", ""),
-      textInput("golfer2", "Golfer 2", ""),
+      selectizeInput(inputId = "golfer1",
+                     label = "Golfer 1", 
+                     choices = read.csv("data/datagolf_rankingsFEB2025.csv")$player_name,
+                     options = list(placeholder = 'Type to search...', maxOptions = 10)),
+      selectizeInput(inputId = "golfer2",
+                     label = "Golfer 2", 
+                     choices = read.csv("data/datagolf_rankingsFEB2025.csv")$player_name,
+                     options = list(placeholder = 'Type to search...', maxOptions = 10)),
       actionButton("submit", "Submit Picks"),
       textOutput("thank_you_msg"),
       hr(),
@@ -203,7 +214,7 @@ server <- function(input, output, session) {
              earnings_g1 == 0,
              earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
-  })
+  }, colnames = FALSE)
   
   output$shane_picks_table <- renderTable({
     data() %>%
@@ -214,7 +225,7 @@ server <- function(input, output, session) {
              earnings_g1 == 0,
              earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
-  })
+  }, colnames = FALSE)
   
   output$sean_picks_table <- renderTable({
     data() %>%
@@ -225,7 +236,7 @@ server <- function(input, output, session) {
              earnings_g1 == 0,
              earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
-  })
+  }, colnames = FALSE)
   
   output$chris_picks_table <- renderTable({
     data() %>%
@@ -236,7 +247,7 @@ server <- function(input, output, session) {
              earnings_g1 == 0,
              earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
-  })
+  }, colnames = FALSE)
   
   
   
@@ -264,7 +275,7 @@ server <- function(input, output, session) {
   observeEvent(input$update_data, 
                {
                
-               showNotification("Scraping PGA earnings data...Please wait!", type = "message", duration = 2)
+               showNotification("Scraping PGA earnings data...Please wait!", type = "message", duration = 25)
                  
                  # start progress bar
                  updateProgressBar(session, id = "progress", value = 0)
@@ -284,11 +295,10 @@ server <- function(input, output, session) {
                  pull()
                
                # get specific url for golfer
-               player_links <- scrape_top_200_payer_ids()
-                
                earnings_list <- list() 
                for(g in all_golfers_selected){
-                 result <- scrape_pga_prize_money(g, player_links)
+                 print(g)
+                 result <- scrape_pga_prize_money(g)
                  earnings_list[[g]] <- result
                }
                earnings <- do.call(rbind, earnings_list) 

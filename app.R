@@ -357,6 +357,7 @@ server <- function(input, output, session) {
                # Get earnings data
                # loop the web scraping function over all golfers selected for this week
                all_golfers_selected <- data() %>%
+                 # filter(is.na(earnings_g1) | is.na(earnings_g2)) %>% # only scrape player data for records that have dont have any earnings figures yet
                  select(golfer1, golfer2) %>%
                  pivot_longer(cols = c("golfer1", "golfer2")) %>%
                  unique() %>%

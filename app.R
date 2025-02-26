@@ -10,6 +10,7 @@ library(lubridate)
 library(readr)
 library(tidyverse)
 library(highcharter)
+library(fresh)
 
 # Use a Google sevice account to allow remote editing of google sheets 
 # this is where data is stored for shiny app

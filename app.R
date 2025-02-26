@@ -259,11 +259,17 @@ ui <- dashboardPage(
         tabName = "game_rules",
         h2("Game Rules"),
         tags$ul(
-          tags$li("€50 entry."),
-          tags$li("You must pick two players for each tournament."),
-          tags$li("You can pick players in advance."),
-          tags$li("You can only pick each player once throughout the season."),
-          tags$li("Winner will be the player with the most earnings at the end of the season (after Tour Championship).")
+          tags$li("€50 entry"),
+          tags$li("You must pick two players for each tournament"),
+          tags$li("You can pick players in advance"),
+          tags$li("You can only pick each player once throughout the season"),
+          tags$li("Winner will be the player with the most earnings at the end of the season (after Tour Championship)"),
+          tags$li("€200 for winner"),
+          tags$li("€50 for second place (money back)"),
+          h2("Sponsers:"),
+          tags$img(src = "baboost.jfif"),
+          tags$img(src = "referhop.png"),
+          tags$img(src = "pif.png", height="50%", width="50%")
         )
       )
     )

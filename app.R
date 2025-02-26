@@ -324,6 +324,8 @@ server <- function(input, output, session) {
                          player_name = input$player_name, 
                          golfer1 = input$golfer1, 
                          golfer2 = input$golfer2,
+                         earnings_g1 = NA,
+                         earnings_g2 = NA,
                          event_occured = FALSE)
     
     update_google_sheet(new_entry) 

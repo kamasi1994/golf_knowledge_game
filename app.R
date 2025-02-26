@@ -137,7 +137,7 @@ ui <- dashboardPage(
         tabName = "picks",
         h1("Enter tournament picks:"),
         selectInput("event_name", "Tournament", choices = event_list),
-        selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris", "Phil")),
+        selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris", "Phil", "Eddie")),
         selectizeInput(inputId = "golfer1",
                        label = "Golfer 1", 
                        choices = read.csv("data/datagolf_rankingsFEB2025.csv")$player_name,
@@ -197,6 +197,15 @@ ui <- dashboardPage(
             solidHeader = TRUE,
             collapsible = TRUE,
             tableOutput("chris_picks_table")
+          ),
+          box(
+            title = tagList(
+              img(src = "eddie.jfif", height = "60px"),
+              "Eddie's Picks"),
+            status = "danger",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            tableOutput("eddie_picks_table")
           ),
           box(
             title = tagList(
@@ -319,6 +328,18 @@ server <- function(input, output, session) {
              earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
+  
+  output$eddie_picks_table <- renderTable({
+    data() %>%
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      filter(player_name == "Eddie",
+             earnings_g1 == 0,
+             earnings_g2 == 0) %>%
+      select(event_name, golfer1, golfer2)
+  }, colnames = FALSE)
+  
   
   
   

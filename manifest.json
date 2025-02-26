@@ -1155,6 +1155,32 @@
         "Built": "R 4.4.0; ; 2024-08-22 23:15:03 UTC; unix"
       }
     },
+    "fresh": {
+      "Source": "CRAN",
+      "Repository": "http://rspm/default/latest",
+      "description": {
+        "Package": "fresh",
+        "Title": "Create Custom 'Bootstrap' Themes to Use in 'Shiny'",
+        "Version": "0.2.1",
+        "Authors@R": "c(\n  person(\"Victor\", \"Perrier\", email = \"victor.perrier@dreamrs.fr\", role = c(\"aut\", \"cre\", \"cph\")),\n  person(\"Fanny\", \"Meyer\", role = \"aut\"),\n  person(\"Thomas\", \"Park\", role = c(\"ctb\", \"cph\"), comment = \"Bootswatch themes\"),\n  person(\"Mark\", \"Otto\", role = \"ctb\", comment = \"Bootstrap library\"),\n  person(\"Jacob\", \"Thornton\", role = \"ctb\", comment = \"Bootstrap library\"),\n  person(family = \"Bootstrap contributors\", role = \"ctb\", comment = \"Bootstrap library\"),\n  person(family = \"Twitter, Inc\", role = \"cph\", comment = \"Bootstrap library\"),\n  person(\"onkbear\", role = c(\"ctb\", \"cph\"), comment = \"admin-lte-2-sass\"),\n  person(family = \"Colorlib\", role = c(\"ctb\", \"cph\"), comment = \"AdminLTE\"))",
+        "Description": "Customize 'Bootstrap' and 'Bootswatch' themes, like colors, fonts, grid layout, \n  to use in 'Shiny' applications, 'rmarkdown' documents and 'flexdashboard'.",
+        "URL": "https://github.com/dreamRs/fresh",
+        "BugReports": "https://github.com/dreamRs/fresh/issues",
+        "License": "GPL-3",
+        "Encoding": "UTF-8",
+        "Imports": "bslib, htmltools, rstudioapi, sass, shiny",
+        "Suggests": "bsicons, shinyWidgets, shinydashboard, bs4Dash, knitr,\nrmarkdown, testthat (>= 2.1.0), covr",
+        "RoxygenNote": "7.3.1",
+        "VignetteBuilder": "knitr",
+        "NeedsCompilation": "no",
+        "Packaged": "2024-06-26 09:11:52 UTC; victorp",
+        "Author": "Victor Perrier [aut, cre, cph],\n  Fanny Meyer [aut],\n  Thomas Park [ctb, cph] (Bootswatch themes),\n  Mark Otto [ctb] (Bootstrap library),\n  Jacob Thornton [ctb] (Bootstrap library),\n  Bootstrap contributors [ctb] (Bootstrap library),\n  Twitter, Inc [cph] (Bootstrap library),\n  onkbear [ctb, cph] (admin-lte-2-sass),\n  Colorlib [ctb, cph] (AdminLTE)",
+        "Maintainer": "Victor Perrier <victor.perrier@dreamrs.fr>",
+        "Repository": "RSPM",
+        "Date/Publication": "2024-06-26 09:50:11 UTC",
+        "Built": "R 4.4.0; ; 2024-06-27 04:11:20 UTC; unix"
+      }
+    },
     "fs": {
       "Source": "CRAN",
       "Repository": "http://rspm/default/latest",
@@ -3700,7 +3726,7 @@
       "checksum": "e1c06d85ae7b8b032bef47e42e4c08f9"
     },
     "app.R": {
-      "checksum": "076bba61b54e9671f6ea4e86f023b6b3"
+      "checksum": "cf69e79027162b90c041e74997689c38"
     },
     "data/datagolf_rankingsFEB2025.csv": {
       "checksum": "970404cf2577b2a73487e58c0ab9b111"

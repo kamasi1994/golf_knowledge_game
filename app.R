@@ -97,7 +97,7 @@ scrape_pga_prize_money <- function(golfer_name) {
 update_google_sheet <- function(new_data) { 
   sheet_append(sheet_url, new_data) } 
 
-event_list <- read_csv("data/events.csv")$event_name
+event_list <- read_csv("data/events_test.csv")$event_name
 
 
 #############################################################
@@ -220,6 +220,12 @@ ui <- dashboardPage(
             status = "primary",
             solidHeader = TRUE,
             highchartOutput("time_series_plot")
+          ),
+          box(
+            title = "Cumulative Earnings",
+            status = "primary",
+            solidHeader = TRUE,
+            highchartOutput("cumulative_plot")
           )
         )
       ),
@@ -317,7 +323,8 @@ server <- function(input, output, session) {
                          event_name = input$event_name, 
                          player_name = input$player_name, 
                          golfer1 = input$golfer1, 
-                         golfer2 = input$golfer2)
+                         golfer2 = input$golfer2,
+                         event_occured = FALSE)
     
     update_google_sheet(new_entry) 
     
@@ -371,6 +378,7 @@ server <- function(input, output, session) {
                  left_join(earnings, by = c("event_name", "golfer2" = "golfer_name")) %>%
                  mutate(earnings_g2 = earnings) %>%
                  select(-earnings) %>%
+                 mutate(event_occured = if_else(!is.na(earnings_g1) | !is.na(earnings_g2), TRUE, event_occured)) %>% # if a prize money result was found, the event occured so update this col
                  replace_na(list(earnings_g1 = 0, earnings_g2 = 0))
                              
                              
@@ -411,22 +419,46 @@ server <- function(input, output, session) {
   # Time series plot 
   output$time_series_plot <- renderHighchart({ 
     df <- data() %>%
-      left_join(read.csv("data/events.csv"), by = "event_name") %>%
+      filter(event_occured) %>% # only show data for events that have occurred
+      left_join(read.csv("data/events_test.csv"), by = "event_name") %>%
       group_by(order, event_name, player_name) %>% 
       summarise(TotalEarnings = sum(earnings_g1 +earnings_g2, na.rm = TRUE)) %>%
-      filter(TotalEarnings > 0) %>%
       arrange(order) %>%
-      mutate(event_name = factor(event_name, levels = unique(event_name))) 
+      mutate(event_name = factor(event_name, levels = unique(event_name[order(order)])))
     
     hchart(df, "line", 
-           hcaes(x = event_name, y = TotalEarnings, group = player_name, color = player_name)) %>%
-      hc_title(text = "Earnings Over Time") %>%
-      hc_xAxis(title = list(text = "Event")) %>%
+           hcaes(x = event_name, y = TotalEarnings, group = player_name)) %>%
+      hc_title(text = "Earnings, by tournament") %>%
+      hc_xAxis(title = list(text = "Tournament"), 
+               categories = levels(df$event_name)) %>%
       hc_yAxis(title = list(text = "Total Earnings")) %>%
       hc_plotOptions(line = list(marker = list(enabled = TRUE))) %>%
       hc_tooltip(shared = TRUE, valueSuffix = " $") 
     }) 
   
+  # cumulative earnings time series plot
+  output$cumulative_plot <- renderHighchart({
+  df <- data() %>%
+    filter(event_occured) %>% # only show data for events that have occurred
+    left_join(read.csv("data/events_test.csv"), by = "event_name") %>%
+    group_by(order, event_name, player_name) %>% 
+    summarise(TotalEarnings = sum(earnings_g1 +earnings_g2, na.rm = TRUE)) %>%
+    group_by(player_name) %>%
+    arrange(order) %>%
+    mutate(TotalEarnings = cumsum(TotalEarnings)) %>%
+    ungroup() %>%
+    arrange(order) %>%
+    mutate(event_name = factor(event_name, levels = unique(event_name[order(order)])))
+    
+    hchart(df, "line", 
+           hcaes(x = event_name, y = TotalEarnings, group = player_name)) %>%
+      hc_title(text = "Cumulative Earnings") %>%
+      hc_xAxis(title = list(text = "Tournament"), 
+               categories = levels(df$event_name)) %>%
+      hc_yAxis(title = list(text = "Total Earnings")) %>%
+      hc_plotOptions(line = list(marker = list(enabled = TRUE))) %>%
+      hc_tooltip(shared = TRUE, valueSuffix = " $")
+    })
 } 
 
 shinyApp(ui = ui, server = server)

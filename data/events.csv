@@ -1,15 +1,15 @@
-event_name,order
-The Genesis Invitational,0
-Arnold Palmer Invitational presented by Mastercard,1
-The Players Championship,2
-The Masters,3
-RBC Heritage,4
-Truist Championship,5
-PGA Championship,6
-The Memorial Tournament presented by Workday,7
-US Open,8
-Travelers Championship,9
-The Open Championship,10
-FedEx St.Jude Championship,11
-BMW Championship,12
-Tour Championship,13
+event_name,order,deadline
+The Genesis Invitational,0,13/02/2025
+Arnold Palmer Invitational presented by Mastercard,1,06/03/2025
+The Players Championship,2,13/03/2025
+The Masters,3,10/04/2025
+RBC Heritage,4,17/04/2025
+Truist Championship,5,08/05/2025
+PGA Championship,6,15/05/2025
+The Memorial Tournament presented by Workday,7,29/05/2025
+US Open,8,12/06/2025
+Travelers Championship,9,19/06/2025
+The Open Championship,10,17/07/2025
+FedEx St.Jude Championship,11,07/08/2025
+BMW Championship,12,14/08/2025
+Tour Championship,13,21/08/2025

@@ -98,7 +98,11 @@ scrape_pga_prize_money <- function(golfer_name) {
 update_google_sheet <- function(new_data) { 
   sheet_append(sheet_url, new_data) } 
 
-event_list <- read_csv("data/events_test.csv")$event_name
+# get list of future events
+event_list <- read_csv("data/events.csv", show_col_types = FALSE) %>%
+  filter(as.Date(deadline, format = "%d/%m/%Y") > Sys.Date()) %>% 
+  select(event_name) %>%
+  pull()
 
 masters_theme <- create_theme(
   adminlte_color(
@@ -286,15 +290,15 @@ ui <- dashboardPage(
         tags$ul(
           h3("Game rules:"),
           tags$li("€50 entry"),
-          tags$li("You must pick two players for each tournament"),
-          tags$li("You can pick players in advance"),
+          tags$li("Pick two players for each tournament"),
           tags$li("You can only pick each player once throughout the season"),
+          tags$li("You can pick players in advance"),
+          tags$li("Re-submitting your two golfers for a particular event will overwrite your previous selection"),
           tags$li("Winner will be the player with the most earnings at the end of the season (after Tour Championship)"),
           tags$li("€250 for winner"),
           tags$li("€50 for second place (money back)"),
           h2("Sponsors:"),
           tags$img(src = "baboost.jfif"),
-          tags$img(src = "referhop.png"),
           tags$img(src = "pif.png", height="50%", width="50%"),
           tags$img(src = "pga.png", height="50%", width="50%")
         )
@@ -316,66 +320,69 @@ server <- function(input, output, session) {
   # Render tables for each player's picks
   output$conor_picks_table <- renderTable({
     data() %>%
-      group_by(player_name, event_name) %>%
+      filter(!event_occured & player_name == "Conor") %>%
+      group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(player_name == "Conor",
-             earnings_g1 == 0,
+      filter(earnings_g1 == 0,
              earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
   output$shane_picks_table <- renderTable({
     data() %>%
-      group_by(player_name, event_name) %>%
+      filter(!event_occured & player_name == "Shane") %>%
+      group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(player_name == "Shane",
-             earnings_g1 == 0,
+      filter(earnings_g1 == 0,
              earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
+  
   
   output$sean_picks_table <- renderTable({
     data() %>%
-      group_by(player_name, event_name) %>%
+      filter(!event_occured & player_name == "Sean") %>%
+      group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(player_name == "Sean",
-             earnings_g1 == 0,
+      filter(earnings_g1 == 0,
              earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
+  
   
   output$chris_picks_table <- renderTable({
     data() %>%
-      group_by(player_name, event_name) %>%
+      filter(!event_occured & player_name == "Chris") %>%
+      group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(player_name == "Chris",
-             earnings_g1 == 0,
+      filter(earnings_g1 == 0,
              earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
+  
   output$phil_picks_table <- renderTable({
     data() %>%
-      group_by(player_name, event_name) %>%
+      filter(!event_occured & player_name == "Phil") %>%
+      group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(player_name == "Phil",
-             earnings_g1 == 0,
+      filter(earnings_g1 == 0,
              earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
   output$eddie_picks_table <- renderTable({
     data() %>%
-      group_by(player_name, event_name) %>%
+      filter(!event_occured & player_name == "Eddie") %>%
+      group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(player_name == "Eddie",
-             earnings_g1 == 0,
+      filter(earnings_g1 == 0,
              earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
@@ -502,7 +509,7 @@ server <- function(input, output, session) {
       ungroup() %>%
       # only show data for events that have occurred
       filter(event_occured) %>% 
-      left_join(read.csv("data/events_test.csv"), by = "event_name") %>%
+      left_join(read.csv("data/events.csv"), by = "event_name") %>%
       group_by(order, event_name, player_name) %>% 
       summarise(TotalEarnings = sum(earnings_g1 +earnings_g2, na.rm = TRUE)) %>%
       arrange(order) %>%
@@ -528,7 +535,7 @@ server <- function(input, output, session) {
     slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
     # only show data for events that have occurred
     filter(event_occured) %>% 
-    left_join(read.csv("data/events_test.csv"), by = "event_name") %>%
+    left_join(read.csv("data/events.csv"), by = "event_name") %>%
     group_by(order, event_name, player_name) %>% 
     summarise(TotalEarnings = sum(earnings_g1 +earnings_g2, na.rm = TRUE)) %>%
     group_by(player_name) %>%

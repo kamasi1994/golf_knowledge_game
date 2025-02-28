@@ -100,7 +100,7 @@ update_google_sheet <- function(new_data) {
 
 # get list of future events
 event_list <- read_csv("data/events.csv", show_col_types = FALSE) %>%
-  filter(as.Date(deadline, format = "%d/%m/%Y") > Sys.Date()) %>% 
+  filter(as.POSIXct(deadline, format = "%d/%m/%Y/%H:%M") > Sys.Date()) %>% 
   select(event_name) %>%
   pull()
 
@@ -291,6 +291,7 @@ ui <- dashboardPage(
         tags$img(src = "coinflip.jpg"),
         h2("Are you feeling lucky?"),
         h4("Toss the coin to double your earnings for the previous week. If you lose, your earnings are set to €0 for that week"),
+        h4("Only your first attempt is recorded. Any subsequent tosses are ignored"),
         
         # Custom CSS for the coin animation
         tags$head(
@@ -361,6 +362,7 @@ ui <- dashboardPage(
           h3("Game rules:"),
           tags$li("€50 entry"),
           tags$li("Pick two players for each tournament"),
+          tags$li("Picks must be submitted by midday on the Thursday of each tournament (6am for the Open Championship"),
           tags$li("You can only pick each player once throughout the season"),
           tags$li("You can pick players in advance"),
           tags$li("Re-submitting your two golfers for a particular event will overwrite your previous selection"),
@@ -470,7 +472,8 @@ server <- function(input, output, session) {
                          golfer2 = input$golfer2,
                          earnings_g1 = NA,
                          earnings_g2 = NA,
-                         event_occured = FALSE)
+                         event_occured = FALSE,
+                         coin_toss = FALSE)
     
     update_google_sheet(new_entry) 
     
@@ -536,8 +539,9 @@ server <- function(input, output, session) {
                  group_by(player_name, event_name) %>%
                  slice_max(order_by = input_date, n = 1, with_ties = FALSE)
                
-               # Save updated data 
-               data(df) 
+               # Save updated data
+               update_google_sheet(df)
+               data(read_sheet(sheet_url)) 
                
                #simulate final scraped progress bar
                showNotification("Scraping complete!...For any technical support please contact Rajeesh Masala Peshwari Naan Prescott",
@@ -687,6 +691,55 @@ server <- function(input, output, session) {
     
     # Update the reactive value
     coin_result(result)
+    
+    
+    # update earnings for most recent event
+    user_won <- input$user_choice == result
+    
+     if(user_won){
+       df_new <- test %>%
+         left_join(read.csv("data/events.csv"), by = "event_name") %>%
+         group_by(player_name, event_name) %>%
+         slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+         filter(player_name == coin_user_name & event_occured == TRUE & coin_toss == FALSE) %>%
+         group_by(player_name) %>%
+         filter(order == max(order)) %>% # only apply change to the latest tournament played
+         mutate(earnings_g1 = earnings_g1 * 2, # double the earnings
+                earnings_g2 = earnings_g2 * 2,
+                coin_toss = TRUE, # update coin toss col
+                input_date = Sys.Date()) %>%
+         select(-order, -deadline)
+         
+         # add new record to table
+         update_google_sheet(df_new)
+         
+         # update data for charts
+         data(read_sheet(sheet_url)) 
+     } 
+    
+    else {
+       
+     df_new <- data() %>%
+       left_join(read.csv("data/events.csv"), by = "event_name") %>%
+       group_by(player_name, event_name) %>%
+       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+       filter(player_name == coin_user_name & event_occured == TRUE & coin_toss == FALSE) %>%
+       group_by(player_name) %>%
+       filter(order == max(order)) %>% # only apply change to the latest tournament played
+     mutate(earnings_g1 = 0, # set earnings to €0
+            earnings_g2 = 0,
+            coin_toss = TRUE, # update coin toss col
+            input_date = Sys.Date()) %>%
+       select(-order, - deadline)
+     
+     # add new record to table
+     update_google_sheet(df_new)
+     
+     # update data for charts
+     data(read_sheet(sheet_url)) 
+     
+   }
+    
   })
   
   # Render the coin animation

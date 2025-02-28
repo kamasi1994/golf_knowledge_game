@@ -149,22 +149,6 @@ ui <- dashboardPage(
       # Add the viewport meta tag for mobile devices
       tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0"),
       
-      tags$style(HTML(
-        "/* Ensure the image is responsive */
-        .responsive-img {
-          max-width: 50%;  /* Image will not exceed 50% of its container */
-          height: auto;    /* Maintain aspect ratio */
-          display: block;  /* Remove extra space below the image */
-          margin: 0 auto;  /* Center the image */
-        }
-        /* Adjust max-width for smaller screens */
-        @media (max-width: 600px) {
-          .responsive-img {
-            max-width: 20%;  /* Increase width on mobile devices */
-          }
-        }"
-      )),
-      
       tags$style(HTML("
         /* Change the box header color to Masters Yellow */
         .box.box-solid.box-primary > .box-header {
@@ -308,7 +292,7 @@ ui <- dashboardPage(
       #################
       tabItem(
         tabName = "coin",
-        tags$img(src = "coinflip_new.jpg",  class = "responsive-img"),
+        tags$img(src = "coinflip_new.jpg"),
         h2("Are you feeling lucky?"),
         h4("Toss the coin to double your earnings for the previous week. If you lose, your earnings are set to €0 for that week"),
         h4("Only your first attempt is recorded. Any subsequent tosses are ignored"),
@@ -392,9 +376,9 @@ ui <- dashboardPage(
           tags$li("€50 for second place (money back)"),
           tags$li("Coin toss functoin will be disabled for the FedEx Play-Off events (i.e. the last three events"),
           h2("Sponsors:"),
-          tags$img(src = "baboost.jfif", class = "responsive-img"),
-          tags$img(src = "pif.png",  class = "responsive-img"),
-          tags$img(src = "pga.png",  class = "responsive-img")
+          tags$img(src = "baboost.jfif"),
+          tags$img(src = "pif.png"),
+          tags$img(src = "pga.png")
         )
       )
     )

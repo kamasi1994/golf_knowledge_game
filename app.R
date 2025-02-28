@@ -134,6 +134,7 @@ ui <- dashboardPage(
     sidebarMenu(
       menuItem("Enter Picks", tabName = "picks", icon = icon("user")),
       menuItem("Dashboard", tabName = "main", icon = icon("dashboard")),
+      menuItem("Feeling lucky?", tabName = "coin", icon = icon("dice")),
       menuItem("Game Rules", tabName = "game_rules", icon = icon("info-circle"))
     )
   ),
@@ -282,6 +283,75 @@ ui <- dashboardPage(
         )
       ),
       
+      #################
+      # Feeling lucky Tab
+      #################
+      tabItem(
+        tabName = "coin",
+        tags$img(src = "coinflip.jpg"),
+        h2("Are you feeling lucky?"),
+        h4("Toss the coin to double your earnings for the previous week. If you lose, your earnings are set to €0 for that week"),
+        
+        # Custom CSS for the coin animation
+        tags$head(
+          tags$style(HTML("
+        @keyframes flip {
+          0% { transform: rotateY(0deg); }
+          50% { transform: rotateY(1800deg); } /* Spin multiple times */
+          100% { transform: rotateY(3600deg); }
+        }
+        .coin {
+          width: 100px;
+          height: 100px;
+          background-color: gold;
+          border-radius: 50%;
+          display: inline-block;
+          animation: flip 2s ease-in-out; /* Animation duration */
+        }
+        .result {
+          font-size: 24px;
+          margin-top: 20px;
+          text-align: center;
+        }
+        
+        /* Las Vegas-style button */
+        .btn-las-vegas {
+          font-size: 32px;               /* Larger font size */
+          padding: 20px 40px;            /* More padding to make the button bigger */
+          background-color: #FFD700;     /* Gold background */
+          color: #000;                  /* Black text */
+          border: 3px solid #8B4513;     /* Brown border */
+          border-radius: 10px;           /* Rounded corners */
+          font-weight: bold;             /* Bold text */
+          text-transform: uppercase;     /* Uppercase text */
+          box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3); /* Shadow for depth */
+          transition: all 0.3s ease;    /* Smooth hover effect */
+        }
+        
+        /* Hover effect */
+        .btn-las-vegas:hover {
+          background-color: #FFA500;     /* Orange background on hover */
+          color: #FFF;                  /* White text on hover */
+          box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.4); /* Larger shadow on hover */
+        }
+      "))),
+        
+        # Input for user name
+        selectInput("coin_user_name", "Enter Your Name", choices = c("Conor", "Shane", "Sean", "Chris", "Phil", "Eddie")),
+        
+        # Radio buttons for user to choose Heads or Tails
+        radioButtons("user_choice", "Choose Heads or Tails:",
+                     choices = c("Heads", "Tails"),
+                     selected = character(0)),  # No default selection
+        
+        # Button to flip the coin
+        actionButton("flip_coin", "Toss Coin", class = "btn-las-vegas"),
+        
+        # Placeholder for the game result
+        uiOutput("coin_animation"),
+        uiOutput("game_result")
+      ),
+        
       #################
       # Game Rules Tab
       #################
@@ -591,7 +661,65 @@ server <- function(input, output, session) {
     ) %>%
     hc_legend(enabled = FALSE) %>%
     hc_plotOptions(bar = list(dataLabels = list(enabled = TRUE, format = "${point.y:,.0f}")))
-  })        
+  })  
+  
+  ########
+  # coin flip processing
+  ########
+  
+  # Reactive value to store the coin flip result
+  coin_result <- reactiveVal(NULL)
+  
+  # Observe the button click
+  observeEvent(input$flip_coin, {
+    # Validate inputs
+    if (is.null(input$coin_user_name) || input$coin_user_name == "") {
+      showNotification("Please enter your name.", type = "error")
+      return()
+    }
+    if (is.null(input$user_choice) || input$user_choice == "") {
+      showNotification("Please choose Heads or Tails.", type = "error")
+      return()
+    }
+    
+    # Simulate a coin flip (randomly choose heads or tails)
+    result <- sample(c("Heads", "Tails"), 1)
+    
+    # Update the reactive value
+    coin_result(result)
+  })
+  
+  # Render the coin animation
+  output$coin_animation <- renderUI({
+    if (!is.null(coin_result())) {
+      tags$div(
+        style = "text-align: center; margin-top: 20px;",
+        tags$div(class = "coin")  # Animated coin
+      )
+    }
+  })
+  
+  # Render the game result
+  output$game_result <- renderUI({
+    if (!is.null(coin_result())) {
+      # Determine if the user won or lost
+      user_won <- input$user_choice == coin_result()
+      
+      # Display the result with some styling
+      tags$div(
+        style = "text-align: center; margin-top: 20px; font-size: 24px;",
+        tags$p(paste("You chose:", input$user_choice)),
+        tags$p(paste("The coin landed on:", coin_result())),
+        tags$p(if (user_won) {
+          tags$span("Congrats, you won! 🎉", style = "color: green;")
+          tags$span("Your earnings for the previous event have been doubled 🤑", style = "color: green;")
+        } else {
+          tags$span("You lost. 😢", style = "color: red;")
+          tags$span("Your earnings for the previous event have been set to €0 👿", style = "color: red;")
+        })
+      )
+    }
+  })
 } 
 
 shinyApp(ui = ui, server = server)

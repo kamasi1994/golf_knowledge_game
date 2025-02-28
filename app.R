@@ -160,7 +160,7 @@ ui <- dashboardPage(
         /* Adjust max-width for smaller screens */
         @media (max-width: 600px) {
           .responsive-img {
-            max-width: 80%;  /* Increase width on mobile devices */
+            max-width: 20%;  /* Increase width on mobile devices */
           }
         }"
       )),

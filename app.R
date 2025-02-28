@@ -288,7 +288,7 @@ ui <- dashboardPage(
       #################
       tabItem(
         tabName = "coin",
-        tags$img(src = "coinflip.jpg", class = "responsive-img"),
+        tags$img(src = "coinflip.jpg", width = "200px", height = "auto"),
         h2("Are you feeling lucky?"),
         h4("Toss the coin to double your earnings for the previous week. If you lose, your earnings are set to €0 for that week"),
         h4("Only your first attempt is recorded. Any subsequent tosses are ignored"),
@@ -296,19 +296,6 @@ ui <- dashboardPage(
         # Custom CSS for the coin animation
         tags$head(
           tags$style(HTML("
-          
-          /* Set a maximum width for the image */
-        .responsive-img {
-          max-width: 100%;  /* Image will not exceed the width of its container */
-          height: auto;     /* Maintain aspect ratio */
-        }
-        
-        /* Optional: Set a specific max-width for mobile devices */
-        @media (max-width: 600px) {
-          .responsive-img {
-            max-width: 300px;  /* Adjust this value as needed */
-          }
-        } 
         
         @keyframes flip {
           0% { transform: rotateY(0deg); }
@@ -385,9 +372,9 @@ ui <- dashboardPage(
           tags$li("€50 for second place (money back)"),
           tags$li("Coin toss functoin will be disabled for the FedEx Play-Off events (i.e. the last three events"),
           h2("Sponsors:"),
-          tags$img(src = "baboost.jfif", class = "responsive-img"),
-          tags$img(src = "pif.png", class = "responsive-img"),
-          tags$img(src = "pga.png", class = "responsive-img")
+          tags$img(src = "baboost.jfif", width = "300px", height = "auto"),
+          tags$img(src = "pif.png", width = "300px", height = "auto"),
+          tags$img(src = "pga.png", width = "300px", height = "auto")
         )
       )
     )

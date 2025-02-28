@@ -720,7 +720,7 @@ server <- function(input, output, session) {
          left_join(read.csv("data/events.csv"), by = "event_name") %>%
          group_by(player_name, event_name) %>%
          slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
-         filter(player_name == inpu$coin_user_name & event_occured == TRUE & coin_toss == FALSE) %>%
+         filter(player_name == input$coin_user_name & event_occured == TRUE & coin_toss == FALSE) %>%
          group_by(player_name) %>%
          filter(order == max(order)) %>% # only apply change to the latest tournament played
          mutate(earnings_g1 = earnings_g1 * 2, # double the earnings

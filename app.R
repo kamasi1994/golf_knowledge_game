@@ -538,7 +538,9 @@ server <- function(input, output, session) {
                  left_join(earnings, by = c("event_name", "golfer2" = "golfer_name", "coin_toss")) %>%
                  mutate(earnings_g2 = earnings) %>%
                  select(-earnings) %>%
-                 mutate(event_occured = if_else(!is.na(earnings_g1) | !is.na(earnings_g2), TRUE, event_occured)) %>% # if a prize money result was found, the event happened so update this col
+                 # update event_corrected flag if current date is >= 5 days after event deadline/startdate
+                 left_join(read.csv("data/events.csv"), by = "event_name") %>%
+                 mutate(event_occured = if_else(Sys.Date() >= as.Date(deadline, format = "%d/%m/%Y/%H:%M")  + 5, TRUE, FALSE)) %>% 
                  replace_na(list(earnings_g1 = 0, earnings_g2 = 0)) %>%
                  group_by(player_name, event_name) %>%
                  slice_max(order_by = input_date, n = 1, with_ties = FALSE)

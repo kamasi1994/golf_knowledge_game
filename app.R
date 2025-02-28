@@ -89,14 +89,18 @@ scrape_pga_prize_money <- function(golfer_name) {
   # combine
   data <- data.frame(golfer_name = golfer_name, event_name = tournaments, earnings = earnings) %>%
     mutate(earnings = if_else(earnings == "--", "0", earnings), # handle NAs (from missed cuts)
-           earnings = as.numeric(gsub("[\\$,]", "", earnings))) 
+           earnings = as.numeric(gsub("[\\$,]", "", earnings)),
+           coin_toss = FALSE) # add a FALSE coin toss column so that only records that havent been gambled are updated 
   
   return(data)
   }
 
-# Function to update Google Sheet 
+# Functions to update Google Sheet 
 update_google_sheet <- function(new_data) { 
-  sheet_append(sheet_url, new_data) } 
+  sheet_write(new_data, ss = sheet_url, sheet = "Sheet1") } 
+
+append_google_sheet <- function(new_data) { 
+  sheet_append(ss = sheet_url, new_data) } 
 
 # get list of future events
 event_list <- read_csv("data/events.csv", show_col_types = FALSE) %>%
@@ -481,7 +485,7 @@ server <- function(input, output, session) {
                          event_occured = FALSE,
                          coin_toss = FALSE)
     
-    update_google_sheet(new_entry) 
+    append_google_sheet(new_entry) 
     
     data(read_sheet(sheet_url)) 
     
@@ -528,20 +532,14 @@ server <- function(input, output, session) {
       
                # Update earnings 
                df <- data() %>% 
-                 left_join(earnings, by = c("event_name", "golfer1" = "golfer_name")) %>%
+                 left_join(earnings, by = c("event_name", "golfer1" = "golfer_name", "coin_toss")) %>%
                  mutate(earnings_g1 = earnings) %>%
                  select(-earnings) %>%
-                 left_join(earnings, by = c("event_name", "golfer2" = "golfer_name")) %>%
+                 left_join(earnings, by = c("event_name", "golfer2" = "golfer_name", "coin_toss")) %>%
                  mutate(earnings_g2 = earnings) %>%
                  select(-earnings) %>%
-                 mutate(event_occured = if_else(!is.na(earnings_g1) | !is.na(earnings_g2), TRUE, event_occured)) %>% # if a prize money result was found, the event occured so update this col
-                 replace_na(list(earnings_g1 = 0, earnings_g2 = 0))
-                             
-                             
-               sheet_write(df, ss = sheet_url, sheet = "Sheet1") 
-               
-               # remove duplicates: only keep latest picks for each player and event
-               df <- df %>%
+                 mutate(event_occured = if_else(!is.na(earnings_g1) | !is.na(earnings_g2), TRUE, event_occured)) %>% # if a prize money result was found, the event happened so update this col
+                 replace_na(list(earnings_g1 = 0, earnings_g2 = 0)) %>%
                  group_by(player_name, event_name) %>%
                  slice_max(order_by = input_date, n = 1, with_ties = FALSE)
                
@@ -702,12 +700,25 @@ server <- function(input, output, session) {
     # update earnings for most recent event
     user_won <- input$user_choice == result
     
+    # does a record exist that allows the user to toss coin
+    record_exist <- data() %>% 
+      filter(player_name == input$coin_user_name & event_occured == TRUE & coin_toss == FALSE) %>%
+      count() %>%
+      pull() > 0
+      
+    # Only proceed if a record exists
+    if (!record_exist) {
+      showNotification("No valid record found for the coin toss.", type = "warning")
+      return()
+    }
+    
+    # update earnings depending on outcome of coin toss
      if(user_won){
-       df_new <- test %>%
+       df_new <- data() %>%
          left_join(read.csv("data/events.csv"), by = "event_name") %>%
          group_by(player_name, event_name) %>%
          slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
-         filter(player_name == coin_user_name & event_occured == TRUE & coin_toss == FALSE) %>%
+         filter(player_name == inpu$coin_user_name & event_occured == TRUE & coin_toss == FALSE) %>%
          group_by(player_name) %>%
          filter(order == max(order)) %>% # only apply change to the latest tournament played
          mutate(earnings_g1 = earnings_g1 * 2, # double the earnings
@@ -717,7 +728,7 @@ server <- function(input, output, session) {
          select(-order, -deadline)
          
          # add new record to table
-         update_google_sheet(df_new)
+         append_google_sheet(df_new)
          
          # update data for charts
          data(read_sheet(sheet_url)) 
@@ -729,7 +740,7 @@ server <- function(input, output, session) {
        left_join(read.csv("data/events.csv"), by = "event_name") %>%
        group_by(player_name, event_name) %>%
        slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
-       filter(player_name == coin_user_name & event_occured == TRUE & coin_toss == FALSE) %>%
+       filter(player_name == input$coin_user_name & event_occured == TRUE & coin_toss == FALSE) %>%
        group_by(player_name) %>%
        filter(order == max(order)) %>% # only apply change to the latest tournament played
      mutate(earnings_g1 = 0, # set earnings to €0
@@ -739,12 +750,11 @@ server <- function(input, output, session) {
        select(-order, - deadline)
      
      # add new record to table
-     update_google_sheet(df_new)
+     append_google_sheet(df_new)
      
      # update data for charts
      data(read_sheet(sheet_url)) 
-     
-   }
+    }
     
   })
   

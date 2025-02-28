@@ -380,9 +380,9 @@ ui <- dashboardPage(
           tags$li("€50 for second place (money back)"),
           tags$li("Coin toss functoin will be disabled for the FedEx Play-Off events (i.e. the last three events"),
           h2("Sponsors:"),
-          tags$img(src = "baboost.jfif"),
-          tags$img(src = "pif.png"),
-          tags$img(src = "pga.png")
+          tags$img(src = "baboost.jfif", width = "50%", height = "auto"),
+          tags$img(src = "pif.png",  width = "50%", height = "auto"),
+          tags$img(src = "pga.png",  width = "50%", height = "auto")
         )
       )
     )
@@ -538,7 +538,7 @@ server <- function(input, output, session) {
                  left_join(earnings, by = c("event_name", "golfer2" = "golfer_name", "coin_toss")) %>%
                  mutate(earnings_g2 = earnings) %>%
                  select(-earnings) %>%
-                 # update event_corrected flag if current date is >= 5 days after event deadline/startdate
+                 # update event_corrected flag if current date is >= 5 days after event deadline/startd
                  left_join(read.csv("data/events.csv"), by = "event_name") %>%
                  mutate(event_occured = if_else(Sys.Date() >= as.Date(deadline, format = "%d/%m/%Y/%H:%M")  + 5, TRUE, FALSE)) %>% 
                  replace_na(list(earnings_g1 = 0, earnings_g2 = 0)) %>%

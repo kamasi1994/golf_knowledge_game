@@ -369,6 +369,7 @@ ui <- dashboardPage(
           tags$li("Winner will be the player with the most earnings at the end of the season (after Tour Championship)"),
           tags$li("€250 for winner"),
           tags$li("€50 for second place (money back)"),
+          tags$li("Coin toss functoin will be disabled for the FedEx Play-Off events (i.e. the last three events"),
           h2("Sponsors:"),
           tags$img(src = "baboost.jfif"),
           tags$img(src = "pif.png", height="50%", width="50%"),

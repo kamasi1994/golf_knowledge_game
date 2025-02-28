@@ -292,7 +292,7 @@ ui <- dashboardPage(
       #################
       tabItem(
         tabName = "coin",
-        tags$img(src = "coinflip_new.jpg"),
+        tags$img(src = "coinflip_new.jpg", width = "50%", height = "auto"),
         h2("Are you feeling lucky?"),
         h4("Toss the coin to double your earnings for the previous week. If you lose, your earnings are set to €0 for that week"),
         h4("Only your first attempt is recorded. Any subsequent tosses are ignored"),

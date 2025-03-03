@@ -139,13 +139,9 @@ ui <- dashboardPage(
       menuItem("Enter Picks", tabName = "picks", icon = icon("user")),
       menuItem("Dashboard", tabName = "main", icon = icon("dashboard")),
       menuItem("Feeling lucky?", tabName = "coin", icon = icon("dice")),
-      menuItem("Game Rules", tabName = "game_rules", icon = icon("info-circle"))
-    ),
-    hr(),
-    div(style = "height: 20vh;"),
-    actionButton("update_data", "Update Prize Money"),
-    h5("Press this to get latest tournament prize money from the web..."),
-    progressBar(id = "progress", value = 0, total = 100, display_pct = TRUE)
+      menuItem("Game Rules", tabName = "game_rules", icon = icon("info-circle")),
+      menuItem("Admin", tabName = "admin", icon = icon("wrench"))
+    )
   ),
   
   # Dashboard body
@@ -385,6 +381,16 @@ ui <- dashboardPage(
           tags$img(src = "pif.png",  width = "50%", height = "auto"),
           tags$img(src = "pga.png",  width = "50%", height = "auto")
         )
+      ),
+      
+      #################
+      # Admin Tab
+      #################
+      tabItem(
+        tabName = "admin",
+        actionButton("update_data", "Update Prize Money"),
+        h5("Press this to get latest tournament prize money from the web..."),
+        progressBar(id = "progress", value = 0, total = 100, display_pct = TRUE)
       )
     )
   )

@@ -197,7 +197,12 @@ ui <- dashboardPage(
                        options = list(placeholder = 'Type to search...', maxOptions = 10)),
         actionButton("submit", "Submit Picks"),
         textOutput("thank_you_msg"),
-        uiOutput("have_i_picked")
+        uiOutput("have_i_picked"),
+        tags$div(style = "font-size: 8px; color: grey; text-align: center; margin-top: 20px;",
+                 "Terms & Conditions: By using this platform, you agree to your personal data being sold to third parties. Albatross Analytics Ltd has 
+                 contracts with a number of firms in the biotech artifical organ sectors, advanced cybernetic research firms, US government survelliance sub-contractors, and far right think tanks. By proceeding
+                 you grant Albatross Analytics Ltd irrevocable rights to distribute your personal data, IP addresses, and geo-locations to these third party partners.") 
+                
       ),
 
       #################

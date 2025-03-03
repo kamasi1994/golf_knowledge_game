@@ -104,7 +104,7 @@ append_google_sheet <- function(new_data) {
 
 # get list of future events
 event_list <- read_csv("data/events.csv", show_col_types = FALSE) %>%
-  filter(as.POSIXct(deadline, format = "%d/%m/%Y/%H:%M") > Sys.Date()) %>% 
+  filter(as.POSIXct(deadline, format = "%d/%m/%Y/%H:%M") > format(Sys.time(), "%Y-%m-%d-%H:%M:%S")) %>% 
   select(event_name) %>%
   pull()
 
@@ -438,7 +438,7 @@ server <- function(input, output, session) {
   
   
   output$chris_picks_table <- renderTable({
-    data() %>%
+   test %>%
       filter(!event_occured & player_name == "Chris") %>%
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
@@ -470,7 +470,7 @@ server <- function(input, output, session) {
   observeEvent(input$submit, { 
     
     
-    new_entry <- tibble( Date = Sys.Date(), 
+    new_entry <- tibble( Date = format(Sys.time(), "%Y-%m-%d-%H:%M:%S"), 
                          event_name = input$event_name, 
                          player_name = input$player_name, 
                          golfer1 = input$golfer1, 
@@ -560,7 +560,7 @@ server <- function(input, output, session) {
                  select(-earnings) %>%
                  # update event_corrected flag if current date is >= 5 days after event deadline/startd
                  left_join(read.csv("data/events.csv"), by = "event_name") %>%
-                 mutate(event_occured = if_else(Sys.Date() >= as.Date(deadline, format = "%d/%m/%Y/%H:%M")  + 5, TRUE, FALSE)) %>% 
+                 mutate(event_occured = if_else(format(Sys.Time(), "%d/%m/%Y/%H:%M") >= as.Date(deadline, format = "%d/%m/%Y/%H:%M")  + 5, TRUE, FALSE)) %>% 
                  replace_na(list(earnings_g1 = 0, earnings_g2 = 0)) %>%
                  group_by(player_name, event_name) %>%
                  slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
@@ -748,7 +748,7 @@ server <- function(input, output, session) {
          mutate(earnings_g1 = earnings_g1 * 2, # double the earnings
                 earnings_g2 = earnings_g2 * 2,
                 coin_toss = TRUE, # update coin toss col
-                input_date = Sys.Date()) %>%
+                input_date = format(Sys.time(),"%d/%m/%Y/%H:%M")) %>%
          select(-order, -deadline)
          
          # add new record to table
@@ -770,7 +770,7 @@ server <- function(input, output, session) {
      mutate(earnings_g1 = 0, # set earnings to €0
             earnings_g2 = 0,
             coin_toss = TRUE, # update coin toss col
-            input_date = Sys.Date()) %>%
+            input_date = format(Sys.time(), "%Y-%m-%d-%H:%M:%S")) %>%
        select(-order, - deadline)
      
      # add new record to table

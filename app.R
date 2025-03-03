@@ -406,8 +406,6 @@ server <- function(input, output, session) {
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(earnings_g1 == 0,
-             earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
@@ -417,8 +415,6 @@ server <- function(input, output, session) {
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(earnings_g1 == 0,
-             earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
@@ -429,8 +425,6 @@ server <- function(input, output, session) {
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(earnings_g1 == 0,
-             earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
@@ -441,8 +435,6 @@ server <- function(input, output, session) {
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(earnings_g1 == 0,
-             earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
@@ -453,8 +445,6 @@ server <- function(input, output, session) {
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(earnings_g1 == 0,
-             earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
@@ -464,8 +454,6 @@ server <- function(input, output, session) {
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(earnings_g1 == 0,
-             earnings_g2 == 0) %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   

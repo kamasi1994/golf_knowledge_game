@@ -200,7 +200,7 @@ ui <- dashboardPage(
         uiOutput("have_i_picked"),
         tags$div(style = "font-size: 8px; color: grey; text-align: center; margin-top: 20px;",
                  "Terms & Conditions: By using this platform, you agree to your personal data being sold to third parties. Albatross Analytics Ltd has 
-                 contracts with a number of firms in the biotech artifical organ sectors, advanced cybernetic research firms, US government survelliance sub-contractors, and far right think tanks. By proceeding
+                 contracts with biotech artifical organ research labs, advanced cybernetics firms, US government survelliance sub-contractors, far right think tanks, and Kildare County Council. By proceeding,
                  you grant Albatross Analytics Ltd irrevocable rights to distribute your personal data, IP addresses, and geo-locations to these third party partners.") 
                 
       ),
@@ -382,7 +382,7 @@ ui <- dashboardPage(
           tags$li("Winner will be the player with the most earnings at the end of the season (after Tour Championship)"),
           tags$li("€250 for winner"),
           tags$li("€50 for second place (money back)"),
-          tags$li("Coin toss functoin will be disabled for the FedEx Play-Off events (i.e. the last three events"),
+          tags$li("Coin toss function will be disabled for the FedEx Play-Off events (i.e. the last three events)"),
           h2("Sponsors:"),
           tags$img(src = "baboost.jfif", width = "50%", height = "auto"),
           tags$img(src = "pif.png",  width = "50%", height = "auto"),

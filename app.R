@@ -140,7 +140,12 @@ ui <- dashboardPage(
       menuItem("Dashboard", tabName = "main", icon = icon("dashboard")),
       menuItem("Feeling lucky?", tabName = "coin", icon = icon("dice")),
       menuItem("Game Rules", tabName = "game_rules", icon = icon("info-circle"))
-    )
+    ),
+    hr(),
+    div(style = "height: 20vh;"),
+    actionButton("update_data", "Update Prize Money"),
+    h5("Press this to get latest tournament prize money from the web..."),
+    progressBar(id = "progress", value = 0, total = 100, display_pct = TRUE)
   ),
   
   # Dashboard body
@@ -194,11 +199,7 @@ ui <- dashboardPage(
                        options = list(placeholder = 'Type to search...', maxOptions = 10)),
         actionButton("submit", "Submit Picks"),
         textOutput("thank_you_msg"),
-        hr(),
-        div(style = "height: 20vh;"),
-        actionButton("update_data", "Update Prize Money"),
-        h5("Press this to get latest tournament prize money from the web..."),
-        progressBar(id = "progress", value = 0, total = 100, display_pct = TRUE)
+        uiOutput("have_i_picked")
       ),
 
       #################
@@ -398,7 +399,6 @@ server <- function(input, output, session) {
   # hide thank you text before button is pressed
   thank_you_text <- reactiveVal((""))
 
-  
   # Render tables for each player's picks
   output$conor_picks_table <- renderTable({
     data() %>%
@@ -473,16 +473,33 @@ server <- function(input, output, session) {
                          event_occured = FALSE,
                          coin_toss = FALSE)
     
-    append_google_sheet(new_entry) 
+      # update database
+      append_google_sheet(new_entry) 
+      
+      # show message once submitted
+      output$thank_you_msg <- renderText({thank_you_text()})
+      thank_you_text("Picks submitted!")
     
-    data(read_sheet(sheet_url)) 
     
-    # show message once submitted
-    thank_you_text("Picks submitted!")
     
-    output$thank_you_msg <- 
-      renderText({thank_you_text()})
-    
+    # have I already picked this player text?
+    output$have_i_picked <- renderUI({
+      already_picked <- data() %>%
+        filter(player_name == input$player_name) %>%
+        group_by(event_name) %>%
+        slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+        ungroup() %>%
+        filter(golfer1 == input$golfer1 | golfer2 == input$golfer1 | golfer1 == input$golfer2 | golfer2 == input$golfer2) %>%
+        count() %>%
+        pull() > 0
+      
+      tags$p(if (already_picked) {
+        tags$span("")
+        tags$span("Warning! You've already picked one of these players. Either choose another player for this tournament or update your selection for a different tournament", style = "color: red;")
+      } else {
+        tags$span("Success", style = "color: green;")
+      })
+    })
     }) 
   
   observeEvent(input$update_data, 

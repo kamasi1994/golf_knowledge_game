@@ -543,7 +543,9 @@ server <- function(input, output, session) {
                  mutate(event_occured = if_else(Sys.Date() >= as.Date(deadline, format = "%d/%m/%Y/%H:%M")  + 5, TRUE, FALSE)) %>% 
                  replace_na(list(earnings_g1 = 0, earnings_g2 = 0)) %>%
                  group_by(player_name, event_name) %>%
-                 slice_max(order_by = input_date, n = 1, with_ties = FALSE)
+                 slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+                 ungroup() %>%
+                 select(event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss)
                
                # Save updated data
                update_google_sheet(df)

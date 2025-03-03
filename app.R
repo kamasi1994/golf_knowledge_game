@@ -187,10 +187,12 @@ ui <- dashboardPage(
         selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris", "Phil", "Eddie")),
         selectizeInput(inputId = "golfer1",
                        label = "Golfer 1", 
+                       selected = NULL,
                        choices = read.csv("data/datagolf_rankingsFEB2025.csv")$player_name,
                        options = list(placeholder = 'Type to search...', maxOptions = 10)),
         selectizeInput(inputId = "golfer2",
                        label = "Golfer 2", 
+                       selected = NULL,
                        choices = read.csv("data/datagolf_rankingsFEB2025.csv")$player_name,
                        options = list(placeholder = 'Type to search...', maxOptions = 10)),
         actionButton("submit", "Submit Picks"),
@@ -465,7 +467,6 @@ server <- function(input, output, session) {
   
   
   
-  
   observeEvent(input$submit, { 
     
     
@@ -478,19 +479,14 @@ server <- function(input, output, session) {
                          earnings_g2 = NA,
                          event_occured = FALSE,
                          coin_toss = FALSE)
+
     
-      # update database
-      append_google_sheet(new_entry) 
-      
-      # show message once submitted
-      output$thank_you_msg <- renderText({thank_you_text()})
-      thank_you_text("Picks submitted!")
-    
-    
+    # data before submission of new picks
+    old <- data()
     
     # have I already picked this player text?
     output$have_i_picked <- renderUI({
-      already_picked <- data() %>%
+      already_picked <- old %>%
         filter(player_name == input$player_name) %>%
         group_by(event_name) %>%
         slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
@@ -506,6 +502,19 @@ server <- function(input, output, session) {
         tags$span("Success", style = "color: green;")
       })
     })
+    
+    # update database
+    append_google_sheet(new_entry) 
+    
+    
+    # show message once submitted
+    output$thank_you_msg <- renderText({thank_you_text()})
+    thank_you_text("Picks submitted!")
+    
+    
+    # reload data
+    data(read_sheet(sheet_url))
+    
     }) 
   
   observeEvent(input$update_data, 

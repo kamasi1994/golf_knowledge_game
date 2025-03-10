@@ -475,7 +475,7 @@ server <- function(input, output, session) {
   observeEvent(input$submit, { 
     
     
-    new_entry <- tibble( Date = as.POSIXct(Sys.time()), 
+    new_entry <- tibble( input_date = as.POSIXct(Sys.time()), 
                          event_name = input$event_name, 
                          player_name = input$player_name, 
                          golfer1 = input$golfer1, 

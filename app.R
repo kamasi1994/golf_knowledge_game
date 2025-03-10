@@ -41,7 +41,7 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th
 # jsonstring <- gsub('"', '\\"', jsonstring)
 # cat(jsonstring)
 
-# test <- read_sheet(sheet_url)
+ test <- read_sheet(sheet_url)
 #############################################################
 # Necessary functions
 #############################################################
@@ -565,7 +565,7 @@ server <- function(input, output, session) {
                  select(-earnings) %>%
                  # update event_corrected flag if current date is >= 5 days after event deadline/startd
                  left_join(read.csv("data/events.csv"), by = "event_name") %>%
-                 mutate(event_occured = if_else(as.POSIXct(sys.time()) >= as.Date(deadline, format = "%d/%m/%Y/%H:%M")  + 5, TRUE, FALSE)) %>% 
+                 mutate(event_occured = if_else(as.POSIXct(Sys.time()) >= as.Date(deadline, format = "%d/%m/%Y/%H:%M")  + 4, TRUE, FALSE)) %>% 
                  replace_na(list(earnings_g1 = 0, earnings_g2 = 0)) %>%
                  group_by(player_name, event_name) %>%
                  slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%

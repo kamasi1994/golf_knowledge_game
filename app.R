@@ -195,6 +195,9 @@ ui <- dashboardPage(
                        selected = NULL,
                        choices = read.csv("data/datagolf_rankingsFEB2025.csv")$player_name,
                        options = list(placeholder = 'Type to search...', maxOptions = 10)),
+        radioButtons(inputId = "anon",
+                     label = "Make selections anonymous?",
+                     choices = c("Yes", "No")),
         actionButton("submit", "Submit Picks"),
         textOutput("thank_you_msg"),
         uiOutput("have_i_picked"),
@@ -415,7 +418,7 @@ server <- function(input, output, session) {
   # Render tables for each player's picks
   output$conor_picks_table <- renderTable({
     data() %>%
-      filter(!event_occured & player_name == "Conor") %>%
+      filter(anonymous == "No" & !event_occured & player_name == "Conor") %>%
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
@@ -424,7 +427,7 @@ server <- function(input, output, session) {
   
   output$shane_picks_table <- renderTable({
     data() %>%
-      filter(!event_occured & player_name == "Shane") %>%
+      filter(anonymous == "No" & !event_occured & player_name == "Shane") %>%
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
@@ -444,7 +447,7 @@ server <- function(input, output, session) {
   
   output$chris_picks_table <- renderTable({
    data() %>%
-      filter(!event_occured & player_name == "Chris") %>%
+      filter(anonymous == "No" & !event_occured & player_name == "Chris") %>%
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
@@ -454,7 +457,7 @@ server <- function(input, output, session) {
   
   output$phil_picks_table <- renderTable({
     data() %>%
-      filter(!event_occured & player_name == "Phil") %>%
+      filter(anonymous == "No" & !event_occured & player_name == "Phil") %>%
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
@@ -463,7 +466,7 @@ server <- function(input, output, session) {
   
   output$eddie_picks_table <- renderTable({
     data() %>%
-      filter(!event_occured & player_name == "Eddie") %>%
+      filter(anonymous == "No" & !event_occured & player_name == "Eddie") %>%
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
@@ -482,6 +485,7 @@ server <- function(input, output, session) {
                          golfer2 = input$golfer2,
                          earnings_g1 = NA,
                          earnings_g2 = NA,
+                         anonymous = input$anon,
                          event_occured = FALSE,
                          coin_toss = FALSE)
 
@@ -570,7 +574,7 @@ server <- function(input, output, session) {
                  group_by(player_name, event_name) %>%
                  slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
                  ungroup() %>%
-                 select(event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss)
+                 select(input_date, anonymous, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss)
                
                # Save updated data
                update_google_sheet(df)

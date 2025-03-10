@@ -479,13 +479,13 @@ server <- function(input, output, session) {
     
     
     new_entry <- tibble( input_date = as.POSIXct(Sys.time()), 
+                         anonymous = input$anon,
                          event_name = input$event_name, 
                          player_name = input$player_name, 
                          golfer1 = input$golfer1, 
                          golfer2 = input$golfer2,
                          earnings_g1 = NA,
                          earnings_g2 = NA,
-                         anonymous = input$anon,
                          event_occured = FALSE,
                          coin_toss = FALSE)
 

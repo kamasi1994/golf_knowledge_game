@@ -418,58 +418,64 @@ server <- function(input, output, session) {
   # Render tables for each player's picks
   output$conor_picks_table <- renderTable({
     data() %>%
-      filter(anonymous == "No" & !event_occured & player_name == "Conor") %>%
+      filter(!event_occured & player_name == "Conor") %>%
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
+      filter(anonymous == "No") %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
   output$shane_picks_table <- renderTable({
     data() %>%
-      filter(anonymous == "No" & !event_occured & player_name == "Shane") %>%
+      filter(!event_occured & player_name == "Shane") %>%
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
+      filter(anonymous == "No") %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
   
   output$sean_picks_table <- renderTable({
     data() %>%
-      filter(!event_occured & player_name == "Sean") %>%
+      filter(player_name == "Sean") %>%
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
+      filter(anonymous == "No") %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
   
   output$chris_picks_table <- renderTable({
    data() %>%
-      filter(anonymous == "No" & !event_occured & player_name == "Chris") %>%
+      filter(!event_occured & player_name == "Chris") %>%
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
+      filter(anonymous == "No") %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
   
   output$phil_picks_table <- renderTable({
     data() %>%
-      filter(anonymous == "No" & !event_occured & player_name == "Phil") %>%
+      filter(!event_occured & player_name == "Phil") %>%
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
+      filter(anonymous == "No") %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
   output$eddie_picks_table <- renderTable({
     data() %>%
-      filter(anonymous == "No" & !event_occured & player_name == "Eddie") %>%
+      filter(!event_occured & player_name == "Eddie") %>%
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
+      filter(anonymous == "No") %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   

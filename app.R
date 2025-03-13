@@ -439,7 +439,7 @@ server <- function(input, output, session) {
   
   output$sean_picks_table <- renderTable({
     data() %>%
-      filter(player_name == "Sean") %>%
+      filter(!event_occured & player_name == "Sean") %>%
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%

@@ -42,7 +42,7 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th
 # jsonstring <- gsub('"', '\\"', jsonstring)
 # cat(jsonstring)
 
- test <- read_sheet(sheet_url)
+test <- read_sheet(sheet_url)
 #############################################################
 # Necessary functions
 #############################################################
@@ -63,10 +63,6 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th
 #   return(player_links)
 # }
 
- "https://www.espn.com/golf/leaderboard"
- "https://www.espn.com/golf/leaderboard/_/tournamentId/401703498"
- 
- 
  # Function to get live scores
  get_live_scores <- function(){
    
@@ -492,7 +488,7 @@ server <- function(input, output, session) {
         select(-numeric_position, -event_name) %>%
         datatable(caption = htmltools::tags$caption(
           style = "caption-side: top; text-align: center; font-size: 24px; font-weight: bold;",
-          unique(live_scores()$event_name)
+          paste0("Live leaderboard: ", unique(live_scores()$event_name))
           ),
           escape = FALSE, 
                   rownames = FALSE, 

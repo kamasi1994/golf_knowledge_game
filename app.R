@@ -11,6 +11,7 @@ library(readr)
 library(tidyverse)
 library(highcharter)
 library(fresh)
+library(stringi)
 
 # Use a Google sevice account to allow remote editing of google sheets 
 # this is where data is stored for shiny app
@@ -62,6 +63,36 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th
 #   return(player_links)
 # }
 
+ "https://www.espn.com/golf/leaderboard"
+ "https://www.espn.com/golf/leaderboard/_/tournamentId/401703498"
+ 
+ 
+ # Function to get live scores
+ get_live_scores <- function(){
+   
+   event_name <- read_html("https://www.espn.com/golf/leaderboard") %>%
+     html_nodes(".headline.headline__h1.Leaderboard__Event__Title") %>%
+     html_text()
+   
+   df <- read_html("https://www.espn.com/golf/leaderboard") %>%
+   html_nodes(".tl.Table__TD") %>%
+   html_text() %>%
+   matrix(ncol = 2, byrow = TRUE) %>%
+   as.data.frame(stringsasFactors = FALSE) %>%
+   mutate(V2 = stri_trans_general(V2, "Latin-ASCII"),
+          event_name = event_name)
+   
+  colnames(df) <- c("position", "golfer", "event_name")
+ 
+  # if average lenght of position string is > 5 then the scraper has picked up data espn.com that only shows if the event hasnt started
+  if(mean(str_length(df$position)) > 5){
+    df <- NULL
+  }
+
+  return(df)
+ }
+   
+   
 # Function to scrape prize money data 
 scrape_pga_prize_money <- function(golfer_name) { 
   
@@ -213,8 +244,21 @@ ui <- dashboardPage(
       #################
       tabItem(
         tabName = "main",
+        
+        ### leaderboard
+        tags$head(
+          tags$style(HTML("
+                          table.dataTable thead { background-color: #004D40; color: #FFFFFF; }
+                          table.dataTable { background-color: #FFFFFF; }
+                          table.dataTable tbody tr:nth-child(even) { background-color: #F8F6F0; }
+                          table.dataTable tbody tr:nth-child(odd) { background-color: #FFFFFF; }
+                          table.dataTable tbody td { font-size: 16px; font-weight: bold; }
+                          "))
+        ),
+        DTOutput("leaderboard"),
+        
+        ### Collapsible boxes for each player's picks
         fluidRow(
-          # Collapsible boxes for each player's picks
           box(
             title = tagList(
               img(src = "conor.jfif", height = "60px", class = "circle-image"),
@@ -414,6 +458,50 @@ server <- function(input, output, session) {
   
   # hide thank you text before button is pressed
   thank_you_text <- reactiveVal((""))
+  
+  # live scores
+  live_scores <- reactiveVal(get_live_scores())
+  
+  
+  output$leaderboard <- renderDT({
+    
+    if(is.null(live_scores())){
+      datatable(data.frame(
+        Name = NA,
+        Golfer = NA,
+        Position = NA
+      ),
+      caption = htmltools::tags$caption(style = "caption-side: top; text-align: center; font-size: 24px; font-weight: bold;",
+      "Leaderboard not live"))
+    } else{
+      data() %>%
+        filter(!event_occured) %>%
+        left_join(read.csv("data/events.csv"), by = "event_name") %>%
+        group_by(player_name) %>%
+        slice_min(order_by = order, n = 1, with_ties = FALSE) %>%
+        ungroup() %>%
+        select(event_name, player_name, golfer1, golfer2) %>%
+        pivot_longer(cols = c("golfer1", "golfer2"),
+                     values_to = "golfer") %>%
+        select(event_name, player_name, golfer) %>%
+        left_join(live_scores(), by = c("event_name", "golfer")) %>%
+        mutate(numeric_position  = as.numeric(sub("^T", "", position))) %>%
+        arrange(numeric_position) %>%
+        select(-numeric_position, -event_name) %>%
+        datatable(caption = htmltools::tags$caption(
+          style = "caption-side: top; text-align: center; font-size: 24px; font-weight: bold;",
+          unique(live_scores()$event_name)
+          ),
+          escape = FALSE, 
+                  rownames = FALSE, 
+                  colnames = c("Name", "Golfer", "Position"), 
+                  options = list(
+          searching = FALSE, 
+          paging = FALSE, 
+          ordering = FALSE)
+        )
+    }
+  })
 
   # Render tables for each player's picks
   output$conor_picks_table <- renderTable({

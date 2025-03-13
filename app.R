@@ -477,8 +477,10 @@ server <- function(input, output, session) {
       data() %>%
         filter(!event_occured) %>%
         left_join(read.csv("data/events.csv"), by = "event_name") %>%
+        group_by(player_name, event_name) %>%
+        slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>% # get latest pick per player x event
         group_by(player_name) %>%
-        slice_min(order_by = order, n = 1, with_ties = FALSE) %>%
+        slice_min(order_by = order, n = 1, with_ties = FALSE) %>% # then get next un-played tournament
         ungroup() %>%
         select(event_name, player_name, golfer1, golfer2) %>%
         pivot_longer(cols = c("golfer1", "golfer2"),

@@ -164,7 +164,7 @@ ui <- dashboardPage(
     width = 200,
     sidebarMenu(
       menuItem("Enter Picks", tabName = "picks", icon = icon("user")),
-      menuItem("Dashboard", tabName = "main", icon = icon("dashboard")),
+      menuItem("Dashboard", tabName = "main", icon = icon("dashboard"), selected = TRUE),
       menuItem("Feeling lucky?", tabName = "coin", icon = icon("dice")),
       menuItem("Game Rules", tabName = "game_rules", icon = icon("info-circle")),
       menuItem("Admin", tabName = "admin", icon = icon("wrench"))

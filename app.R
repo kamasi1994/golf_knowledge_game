@@ -42,7 +42,7 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th
 # jsonstring <- gsub('"', '\\"', jsonstring)
 # cat(jsonstring)
 
-test <- read_sheet(sheet_url)
+# test <- read_sheet(sheet_url)
 #############################################################
 # Necessary functions
 #############################################################
@@ -121,6 +121,10 @@ scrape_pga_prize_money <- function(golfer_name) {
   
   return(data)
   }
+
+# load earnings prediction model
+earnings_pred_model <- readRDS("data/earnings_model.rds")
+
 
 # Functions to update Google Sheet 
 update_google_sheet <- function(new_data) { 
@@ -250,7 +254,8 @@ ui <- dashboardPage(
                           table.dataTable tbody td { font-size: 16px; font-weight: bold; }
                           "))
         ),
-        DTOutput("leaderboard")
+        DTOutput("leaderboard"),
+        highchartOutput("live_earnings_prediction")
       ),
 
       #################
@@ -510,6 +515,53 @@ server <- function(input, output, session) {
         )
     }
   })
+  
+  # show live predicted earnings using random forest model
+  output$live_earnings_prediction <- renderHighchart({
+    
+    live_predicted_earnings <- data() %>%
+      filter(!event_occured) %>%
+      left_join(read.csv("data/events.csv"), by = "event_name") %>%
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>% # get latest pick per player x event
+      group_by(player_name) %>%
+      slice_min(order_by = order, n = 1, with_ties = FALSE) %>% # then get next un-played tournament
+      ungroup() %>%
+      select(event_name, player_name, golfer1, golfer2) %>%
+      pivot_longer(cols = c("golfer1", "golfer2"),
+                   values_to = "golfer") %>%
+      select(event_name, player_name, golfer) %>%
+      left_join(live_scores(), by = c("event_name", "golfer")) 
+  
+    # Clean the positions column
+    live_predicted_earnings$adjusted_position <- gsub("T", "", live_predicted_earnings$position)  # Remove "T" from tied positions
+    live_predicted_earnings$adjusted_position <- as.numeric(live_predicted_earnings$adjusted_position)     # Convert to numeric
+  
+    # retain predicive power of tied places
+    # Adjust positions for ties
+    live_predicted_earnings <- live_predicted_earnings %>%
+      group_by(position) %>%
+      mutate(adjusted_position = ifelse(n() > 1, mean(adjusted_position + 0:(n() - 1)), adjusted_position)) %>%
+      ungroup() %>%
+      select(event_name, player_name, position, adjusted_position)
+  
+  
+    # Use the random forest model to predict earnings on live data
+    predicted_earnings <- predict(earnings_pred_model, live_predicted_earnings) 
+    
+    live_predicted_earnings %>%
+      mutate(predicted_earnings = if_else(adjusted_position > 65, 0, predicted_earnings)) %>%
+      select(player_name, position, predicted_earnings) %>%
+      group_by(player_name) %>%
+      summarise(predicted_earnings = sum(predicted_earnings, na.rm = T)) %>%
+      arrange(desc(predicted_earnings)) %>%
+      hchart("bar", hcaes(x = player_name, y = predicted_earnings, color = player_name)) %>%
+      hc_title(text = "Live Predicted Earnings") %>%
+      hc_yAxis(title = list(text = "Total Predicted Earnings"))
+      
+  })
+  
+
 
   # Render tables for each player's picks
   output$conor_picks_table <- renderTable({

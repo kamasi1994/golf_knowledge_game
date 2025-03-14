@@ -164,7 +164,8 @@ ui <- dashboardPage(
     width = 200,
     sidebarMenu(
       menuItem("Enter Picks", tabName = "picks", icon = icon("user")),
-      menuItem("Dashboard", tabName = "main", icon = icon("dashboard"), selected = TRUE),
+      menuItem("Live Leaderboard", tabName = "leaderboard", icon = icon("chart-line"), selected = TRUE),
+      menuItem("Dashboard", tabName = "main", icon = icon("dashboard")),
       menuItem("Feeling lucky?", tabName = "coin", icon = icon("dice")),
       menuItem("Game Rules", tabName = "game_rules", icon = icon("info-circle")),
       menuItem("Admin", tabName = "admin", icon = icon("wrench"))
@@ -234,14 +235,12 @@ ui <- dashboardPage(
                  you grant Albatross Analytics Ltd irrevocable rights to distribute your personal data, IP addresses, and geo-locations to these third party partners.") 
                 
       ),
-
+      
       #################
-      # Main dashboard tab
+      # Live leaderboard tab
       #################
       tabItem(
-        tabName = "main",
-        
-        ### leaderboard
+        tabName = "leaderboard",
         tags$head(
           tags$style(HTML("
                           table.dataTable thead { background-color: #004D40; color: #FFFFFF; }
@@ -251,10 +250,18 @@ ui <- dashboardPage(
                           table.dataTable tbody td { font-size: 16px; font-weight: bold; }
                           "))
         ),
-        DTOutput("leaderboard"),
+        DTOutput("leaderboard")
+      ),
+
+      #################
+      # Main dashboard tab
+      #################
+      tabItem(
+        tabName = "main",
         
         ### Collapsible boxes for each player's picks
         fluidRow(
+          h4("Future tournament picks", style = "text-align: center;"),  
           box(
             title = tagList(
               img(src = "conor.jfif", height = "60px", class = "circle-image"),

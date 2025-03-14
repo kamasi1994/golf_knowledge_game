@@ -1,7 +1,7 @@
 {
   "version": 1,
   "locale": "C",
-  "platform": "4.4.2",
+  "platform": "4.4.3",
   "metadata": {
     "appmode": "shiny",
     "primary_rmd": null,
@@ -3726,19 +3726,25 @@
       "checksum": "e1c06d85ae7b8b032bef47e42e4c08f9"
     },
     "app.R": {
-      "checksum": "cf69e79027162b90c041e74997689c38"
+      "checksum": "90db78522d7d25785c5fda1c1deca812"
     },
     "data/datagolf_rankingsFEB2025.csv": {
       "checksum": "970404cf2577b2a73487e58c0ab9b111"
+    },
+    "data/earnings_model.rds": {
+      "checksum": "f14a710bc851425979f443e377715c1c"
     },
     "data/events_test.csv": {
       "checksum": "8f64c57b886e51a98eb6f3a926a60dcd"
     },
     "data/events.csv": {
-      "checksum": "dfe51deb632a88efd0da8a93202e4289"
+      "checksum": "b58f797a93c20148ad085e74d5eb493f"
     },
     "data/player_urls.csv": {
       "checksum": "13df139de6b9035a09ac7f26b433c960"
+    },
+    "live_earnings_prediction_model.R": {
+      "checksum": "10053ce1addbdfa7cab7520e6336a110"
     },
     "service_key.json": {
       "checksum": "7e82c497d2064dfbb9176c52ec9305f2"
@@ -3751,6 +3757,12 @@
     },
     "www/chris.jfif": {
       "checksum": "e6cc10644f35dd91c57775bba7883ec3"
+    },
+    "www/coinflip_new.jpg": {
+      "checksum": "f9648ff947f9418e44b4c58d2c7c3adc"
+    },
+    "www/coinflip.jpg": {
+      "checksum": "f7b3b438729b119fe0699941030f7414"
     },
     "www/conor.jfif": {
       "checksum": "5d30ee4f2c2fc7b25735b15edd5ff6c6"

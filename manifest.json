@@ -2500,6 +2500,30 @@
         "Built": "R 4.4.0; x86_64-pc-linux-gnu; 2025-01-21 11:08:55 UTC; unix"
       }
     },
+    "randomForest": {
+      "Source": "CRAN",
+      "Repository": "http://rspm/default/latest",
+      "description": {
+        "Package": "randomForest",
+        "Title": "Breiman and Cutlers Random Forests for Classification and\nRegression",
+        "Version": "4.7-1.2",
+        "Date": "2022-01-24",
+        "Depends": "R (>= 4.1.0), stats",
+        "Suggests": "RColorBrewer, MASS",
+        "Authors@R": "c(person(\"Leo\", \"Breiman\", role = \"aut\",\n                    comment = \"Fortran original\"),\n             person(\"Adele\", \"Cutler\", role = \"aut\",\n\t            comment = \"Fortran original\"),\n             person(\"Andy\", \"Liaw\", role = c(\"aut\", \"cre\"),\n                    email = \"andy_liaw@merck.com\",\n\t\t    comment = \"R port\"),\n             person(\"Matthew\", \"Wiener\", role = \"aut\",\n\t            comment = \"R port\"))",
+        "Description": "Classification and regression based on a forest of trees using random inputs, based on Breiman (2001) <DOI:10.1023/A:1010933404324>.",
+        "License": "GPL (>= 2)",
+        "URL": "https://www.stat.berkeley.edu/~breiman/RandomForests/",
+        "NeedsCompilation": "yes",
+        "Packaged": "2024-09-22 08:30:17 UTC; hornik",
+        "Repository": "RSPM",
+        "Date/Publication": "2024-09-22 09:14:44 UTC",
+        "Author": "Leo Breiman [aut] (Fortran original),\n  Adele Cutler [aut] (Fortran original),\n  Andy Liaw [aut, cre] (R port),\n  Matthew Wiener [aut] (R port)",
+        "Maintainer": "Andy Liaw <andy_liaw@merck.com>",
+        "Encoding": "UTF-8",
+        "Built": "R 4.4.0; x86_64-pc-linux-gnu; 2024-09-23 04:08:25 UTC; unix"
+      }
+    },
     "rappdirs": {
       "Source": "CRAN",
       "Repository": "http://rspm/default/latest",
@@ -3726,7 +3750,7 @@
       "checksum": "e1c06d85ae7b8b032bef47e42e4c08f9"
     },
     "app.R": {
-      "checksum": "90db78522d7d25785c5fda1c1deca812"
+      "checksum": "5355bbed1f6d919220900787e15aa591"
     },
     "data/datagolf_rankingsFEB2025.csv": {
       "checksum": "970404cf2577b2a73487e58c0ab9b111"

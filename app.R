@@ -261,11 +261,11 @@ ui <- dashboardPage(
         
         ### Collapsible boxes for each player's picks
         fluidRow(
-          h4("Future tournament picks", style = "text-align: center;"),  
+          h4("Future tournament picks", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
           box(
             title = tagList(
               img(src = "conor.jfif", height = "60px", class = "circle-image"),
-              "Conor's Picks"),
+              "Conor"),
             status = "primary",
             solidHeader = TRUE,
             collapsible = TRUE,
@@ -274,7 +274,7 @@ ui <- dashboardPage(
           box(
             title = tagList(
               img(src = "shane.jfif", height = "60px", class = "circle-image"),
-              "Shane's Picks"),
+              "Shane"),
             status = "primary",
             solidHeader = TRUE,
             collapsible = TRUE,
@@ -283,7 +283,7 @@ ui <- dashboardPage(
           box(
             title = tagList(
               img(src = "sean.jfif", height = "60px", class = "circle-image"),
-              "Sean's Picks"),
+              "Sean"),
             status = "primary",
             solidHeader = TRUE,
             collapsible = TRUE,
@@ -292,7 +292,7 @@ ui <- dashboardPage(
           box(
             title = tagList(
               img(src = "chris.jfif", height = "60px", class = "circle-image"),
-              "Chris's Picks"),
+              "Chris"),
             status = "primary",
             solidHeader = TRUE,
             collapsible = TRUE,
@@ -301,7 +301,7 @@ ui <- dashboardPage(
           box(
             title = tagList(
               img(src = "eddie.jfif", height = "60px", class = "circle-image"),
-              "Eddie's Picks"),
+              "Eddie"),
             status = "primary",
             solidHeader = TRUE,
             collapsible = TRUE,
@@ -310,7 +310,7 @@ ui <- dashboardPage(
           box(
             title = tagList(
               img(src = "phil.jfif", height = "60px", class = "circle-image"),
-              "Phil's Picks"),
+              "Phil"),
             status = "primary",
             solidHeader = TRUE,
             collapsible = TRUE,
@@ -318,6 +318,9 @@ ui <- dashboardPage(
           )
         ),
         fluidRow(
+          hr(),
+          h4("Standings", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
+          hr(),
           box(
             title = "",
             status = "primary",

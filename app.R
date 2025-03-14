@@ -558,7 +558,10 @@ server <- function(input, output, session) {
       arrange(desc(predicted_earnings)) %>%
       hchart("bar", hcaes(x = player_name, y = predicted_earnings, color = player_name)) %>%
       hc_title(text = "Live Predicted Earnings") %>%
-      hc_yAxis(title = list(text = "Total Predicted Earnings"))
+      hc_yAxis(title = list(text = "Total Predicted Earnings")) %>%
+      hc_tooltip(
+        pointFormat = "<b>{point.player_name}</b><br>predicted_earnings: ${point.y:,.0f}"
+      ) 
       
   })
   

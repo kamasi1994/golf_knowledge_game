@@ -234,11 +234,12 @@ ui <- dashboardPage(
         actionButton("submit", "Submit Picks"),
         textOutput("thank_you_msg"),
         uiOutput("have_i_picked"),
+        h4("Previously selected golfers", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
+        DTOutput("prev_picked"),
         tags$div(style = "font-size: 8px; color: grey; text-align: center; margin-top: 20px;",
                  "Terms & Conditions: By using this platform, you agree to your personal data being sold to third parties. Albatross Analytics Ltd has 
                  contracts with biotech artifical organ research labs, advanced cybernetics firms, US government survelliance sub-contractors, far right think tanks, and Kildare County Council. By proceeding,
-                 you grant Albatross Analytics Ltd irrevocable rights to distribute your personal data, IP addresses, and geo-locations to these third party partners.") 
-                
+                 you grant Albatross Analytics Ltd irrevocable rights to distribute your personal data, IP addresses, and geo-locations to these third party partners.")
       ),
       
       #################
@@ -470,6 +471,22 @@ server <- function(input, output, session) {
   
   # hide thank you text before button is pressed
   thank_you_text <- reactiveVal((""))
+  
+  
+  # add table of picked golfers
+  output$prev_picked <- renderDT({
+  data() %>%
+    filter(player_name == input$player_name,
+           event_occured) %>%
+    group_by(player_name, event_name) %>%
+    slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>% # get latest pick per player x event
+    group_by(player_name) %>%
+    select(player_name, event_name, golfer1, earnings_g1, golfer2, earnings_g2) %>%
+    mutate(earnings_g1 = scales::label_dollar()(earnings_g1),
+           earnings_g2 = scales::label_dollar()(earnings_g2)) %>%
+    datatable(colnames = c("Name", "Event", "Golfer 1", "Earnings 1", "Golfer 2", "Earnings 2"),
+              rownames = FALSE)
+  })
   
   # live scores
   live_scores <- reactiveVal(get_live_scores())

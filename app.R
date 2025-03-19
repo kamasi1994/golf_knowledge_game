@@ -484,7 +484,13 @@ server <- function(input, output, session) {
     select(player_name, event_name, golfer1, earnings_g1, golfer2, earnings_g2) %>%
     mutate(earnings_g1 = scales::label_dollar()(earnings_g1),
            earnings_g2 = scales::label_dollar()(earnings_g2)) %>%
-    datatable(colnames = c("Name", "Event", "Golfer 1", "Earnings 1", "Golfer 2", "Earnings 2"),
+      rename(golfer_g1 = golfer1,
+             golfer_g2 = golfer2) %>%
+    pivot_longer(cols = starts_with("golfer") | starts_with("earnings"),  # Columns to pivot
+                 names_to = c(".value", "golfer_num"),  # Split column names into .value and golfer_num
+                 names_sep = "_g") %>%  # Separate names at the underscore
+    select(player_name, event_name, golfer, earnings) %>%
+    datatable(colnames = c("Name", "Event", "Golfer", "Earnings"),
               rownames = FALSE)
   })
   

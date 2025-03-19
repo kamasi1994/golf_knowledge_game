@@ -787,7 +787,8 @@ server <- function(input, output, session) {
       hc_yAxis(title = list(text = "Earnings")) %>%
       hc_plotOptions(column = list(
         stacking = "normal"
-      ))
+      )) %>%
+      hc_tooltip(shared = TRUE, valueSuffix = " $") 
     }
     ) 
   ####

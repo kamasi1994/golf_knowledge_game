@@ -489,8 +489,8 @@ server <- function(input, output, session) {
     pivot_longer(cols = starts_with("golfer") | starts_with("earnings"),  # Columns to pivot
                  names_to = c(".value", "golfer_num"),  # Split column names into .value and golfer_num
                  names_sep = "_g") %>%  # Separate names at the underscore
-    select(player_name, event_name, golfer, earnings) %>%
-    datatable(colnames = c("Name", "Event", "Golfer", "Earnings"),
+    select(event_name, golfer, earnings) %>%
+    datatable(colnames = c("Event", "Golfer", "Earnings"),
               rownames = FALSE)
   })
   

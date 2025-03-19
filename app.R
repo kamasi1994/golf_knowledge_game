@@ -257,7 +257,14 @@ ui <- dashboardPage(
                           "))
         ),
         DTOutput("leaderboard"),
-        highchartOutput("live_earnings_prediction")
+        conditionalPanel(
+          condition =  "output.live_data_available",
+          highchartOutput("live_earnings_prediction")
+        ),
+        conditionalPanel(
+          condition = "!output.live_data_available",
+          h3("No active tournament data available. Please check back later!")
+        )
       ),
 
       #################
@@ -472,11 +479,10 @@ server <- function(input, output, session) {
   # hide thank you text before button is pressed
   thank_you_text <- reactiveVal((""))
   
-  
   # add table of picked golfers
   output$prev_picked <- renderDT({
   data() %>%
-    filter(player_name == input$plyaer_name,
+    filter(player_name == input$player_name,
            event_occured) %>%
     group_by(player_name, event_name) %>%
     slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>% # get latest pick per player x event
@@ -504,6 +510,12 @@ server <- function(input, output, session) {
   # live scores
   live_scores <- reactiveVal(get_live_scores())
   
+  # Check if live leaderboard data is available
+  output$live_data_available <- reactive({
+    !is.null(live_scores())
+  })
+  
+  outputOptions(output, "live_data_available", suspendWhenHidden = FALSE)
   
   output$leaderboard <- renderDT({
     
@@ -550,6 +562,8 @@ server <- function(input, output, session) {
   # show live predicted earnings using random forest model
   output$live_earnings_prediction <- renderHighchart({
     
+    req(live_scores()) # Ensure data is available
+    
     live_predicted_earnings <- data() %>%
       filter(!event_occured) %>%
       left_join(read.csv("data/events.csv"), by = "event_name") %>%
@@ -580,6 +594,7 @@ server <- function(input, output, session) {
     # Use the random forest model to predict earnings on live data
     predicted_earnings <- predict(earnings_pred_model, live_predicted_earnings) 
     
+
     live_predicted_earnings %>%
       mutate(predicted_earnings = if_else(adjusted_position > 65, 0, predicted_earnings)) %>%
       select(player_name, position, predicted_earnings) %>%

@@ -476,11 +476,11 @@ server <- function(input, output, session) {
   # add table of picked golfers
   output$prev_picked <- renderDT({
   data() %>%
-    filter(player_name == input$player_name,
+    filter(player_name == input$plyaer_name,
            event_occured) %>%
     group_by(player_name, event_name) %>%
     slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>% # get latest pick per player x event
-    group_by(player_name) %>%
+    ungroup() %>%
     select(player_name, event_name, golfer1, earnings_g1, golfer2, earnings_g2) %>%
     mutate(earnings_g1 = scales::label_dollar()(earnings_g1),
            earnings_g2 = scales::label_dollar()(earnings_g2)) %>%
@@ -490,8 +490,15 @@ server <- function(input, output, session) {
                  names_to = c(".value", "golfer_num"),  # Split column names into .value and golfer_num
                  names_sep = "_g") %>%  # Separate names at the underscore
     select(event_name, golfer, earnings) %>%
-    datatable(colnames = c("Event", "Golfer", "Earnings"),
-              rownames = FALSE)
+    datatable(
+      colnames = c("Event", "Golfer", "Earnings"),
+      escape = FALSE, 
+      rownames = FALSE, 
+      options = list(
+        searching = FALSE, 
+        paging = FALSE, 
+        ordering = FALSE)
+    )
   })
   
   # live scores

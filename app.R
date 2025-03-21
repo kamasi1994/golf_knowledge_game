@@ -1031,7 +1031,7 @@ server <- function(input, output, session) {
   
   # degenerate gamblers table
   output$degenerate_gambler <- renderDT({
-    test %>%
+    data() %>%
       filter(event_occured & coin_toss) %>%
       mutate(coin_toss_success = if_else(earnings_g1 == 0 & earnings_g2 == 0, "Lost all earnings", "Doubled earnings")) %>%
       select(player_name, event_name, coin_toss_success) %>%

@@ -430,7 +430,9 @@ ui <- dashboardPage(
         
         # Placeholder for the game result
         uiOutput("coin_animation"),
-        uiOutput("game_result")
+        uiOutput("game_result"),
+        h4("Degenerate Gamblers (coin toss results)", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
+        DTOutput("degenerate_gambler")
       ),
         
       #################
@@ -1025,6 +1027,22 @@ server <- function(input, output, session) {
         })
       )
     }
+  })
+  
+  # degenerate gamblers table
+  output$degenerate_gambler <- renderDT({
+    test %>%
+      filter(event_occured & coin_toss) %>%
+      mutate(coin_toss_success = if_else(earnings_g1 == 0 & earnings_g2 == 0, "Lost all earnings", "Doubled earnings")) %>%
+      select(player_name, event_name, coin_toss_success) %>%
+      datatable(colnames = c("Name", "Event", "Coin Toss Result"),
+                escape = FALSE, 
+                rownames = FALSE, 
+                options = list(
+                  searching = FALSE, 
+                  paging = FALSE, 
+                  ordering = FALSE)
+      )
   })
 } 
 

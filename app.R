@@ -767,10 +767,10 @@ server <- function(input, output, session) {
                # Update earnings 
                df <- data() %>% 
                  left_join(earnings, by = c("event_name", "golfer1" = "golfer_name", "coin_toss")) %>%
-                 mutate(earnings_g1 = earnings) %>%
+                 mutate(earnings_g1 = if_else(coin_toss == TRUE, earnings_g1, earnings)) %>% # if coin was tossed, preserve existing earnings
                  select(-earnings) %>%
                  left_join(earnings, by = c("event_name", "golfer2" = "golfer_name", "coin_toss")) %>%
-                 mutate(earnings_g2 = earnings) %>%
+                 mutate(earnings_g2 = if_else(coin_toss == TRUE, earnings_g2, earnings)) %>% # if coin was tossed, preserve existing earnings
                  select(-earnings) %>%
                  # update event_corrected flag if current date is >= 5 days after event deadline/startd
                  left_join(read.csv("data/events.csv"), by = "event_name") %>%

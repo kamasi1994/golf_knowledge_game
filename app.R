@@ -917,6 +917,14 @@ server <- function(input, output, session) {
   # Reactive value to store the coin flip result
   coin_result <- reactiveVal(NULL)
   
+  # get latest played event
+  latest_event_played <- reactiveVal(
+    read.csv("data/events.csv") %>%
+      filter(as.Date(deadline, format = "%d/%m/%Y/%H:%M")  + 4 < Sys.time()) %>%
+      slice_max(order_by = order) %>%
+      pull(event_name)
+  )
+  
   # Observe the button click
   observeEvent(input$flip_coin, {
     # Validate inputs
@@ -940,8 +948,9 @@ server <- function(input, output, session) {
     user_won <- input$user_choice == result
     
     # does a record exist that allows the user to toss coin
+    # Specifically, have they tossed the coin on most recently played event?
     record_exist <- data() %>% 
-      filter(player_name == input$coin_user_name & event_occured == TRUE & coin_toss == FALSE) %>%
+      filter(player_name == input$coin_user_name & event_name == latest_event_played() & coin_toss == FALSE) %>%
       count() %>%
       pull() > 0
       
@@ -957,9 +966,7 @@ server <- function(input, output, session) {
          left_join(read.csv("data/events.csv"), by = "event_name") %>%
          group_by(player_name, event_name) %>%
          slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
-         filter(player_name == input$coin_user_name & event_occured == TRUE & coin_toss == FALSE) %>%
-         group_by(player_name) %>%
-         filter(order == max(order)) %>% # only apply change to the latest tournament played
+         filter(player_name == input$coin_user_name & event_name == latest_event_played() & coin_toss == FALSE) %>%
          mutate(earnings_g1 = earnings_g1 * 2, # double the earnings
                 earnings_g2 = earnings_g2 * 2,
                 coin_toss = TRUE, # update coin toss col
@@ -979,10 +986,8 @@ server <- function(input, output, session) {
        left_join(read.csv("data/events.csv"), by = "event_name") %>%
        group_by(player_name, event_name) %>%
        slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
-       filter(player_name == input$coin_user_name & event_occured == TRUE & coin_toss == FALSE) %>%
-       group_by(player_name) %>%
-       filter(order == max(order)) %>% # only apply change to the latest tournament played
-     mutate(earnings_g1 = 0, # set earnings to €0
+       filter(player_name == input$coin_user_name & event_name == latest_event_played() & coin_toss == FALSE) %>%
+       mutate(earnings_g1 = 0, # set earnings to €0
             earnings_g2 = 0,
             coin_toss = TRUE, # update coin toss col
             input_date = as.POSIXct(Sys.time())) %>%
@@ -1020,10 +1025,10 @@ server <- function(input, output, session) {
         tags$p(paste("The coin landed on:", coin_result())),
         tags$p(if (user_won) {
           tags$span("Congrats, you won! 🎉", style = "color: green;")
-          tags$span("Your earnings for the previous event have been doubled 🤑", style = "color: green;")
+          tags$span(paste("Your earnings for the ", latest_event_played(), "have been doubled 🤑"), style = "color: green;")
         } else {
           tags$span("You lost. 😢", style = "color: red;")
-          tags$span("Your earnings for the previous event have been set to €0 👿", style = "color: red;")
+          tags$span(paste("Your earnings for the", latest_event_played(), "have been set to €0 👿"), style = "color: red;")
         })
       )
     }

@@ -217,7 +217,7 @@ ui <- dashboardPage(
         tabName = "picks",
         h1("Enter tournament picks:"),
         selectInput("event_name", "Tournament", choices = event_list),
-        selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris", "Phil", "Eddie")),
+        selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris", "Phil", "Eddie", "Jive")),
         selectizeInput(inputId = "golfer1",
                        label = "Golfer 1", 
                        selected = NULL,
@@ -329,6 +329,15 @@ ui <- dashboardPage(
             solidHeader = TRUE,
             collapsible = TRUE,
             tableOutput("phil_picks_table")
+          ),
+          box(
+            title = tagList(
+              img(src = "jive.jpg", height = "60px", class = "circle-image"),
+              "Jive"),
+            status = "primary",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            tableOutput("jive_picks_table")
           )
         ),
         fluidRow(
@@ -661,6 +670,16 @@ server <- function(input, output, session) {
   output$phil_picks_table <- renderTable({
     data() %>%
       filter(!event_occured & player_name == "Phil") %>%
+      group_by(event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      filter(anonymous == "No") %>%
+      select(event_name, golfer1, golfer2)
+  }, colnames = FALSE)
+  
+  output$jive_picks_table <- renderTable({
+    data() %>%
+      filter(!event_occured & player_name == "Jive") %>%
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%

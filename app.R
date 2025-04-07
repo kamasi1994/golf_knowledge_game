@@ -228,9 +228,6 @@ ui <- dashboardPage(
                        selected = NULL,
                        choices = read.csv("data/datagolf_rankingsFEB2025.csv")$player_name,
                        options = list(placeholder = 'Type to search...', maxOptions = 10)),
-        radioButtons(inputId = "anon",
-                     label = "Make selections anonymous?",
-                     choices = c("Yes", "No")),
         actionButton("submit", "Submit Picks"),
         textOutput("thank_you_msg"),
         uiOutput("have_i_picked"),
@@ -460,7 +457,8 @@ ui <- dashboardPage(
           tags$li("Re-submitting your two golfers for a particular event will overwrite your previous selection"),
           tags$li("Winner will be the player with the most earnings at the end of the season (after Tour Championship)"),
           tags$li("€250 for winner"),
-          tags$li("€50 for second place (money back)"),
+          tags$li("€75 for second place"),
+          tags$li("€25 for third place"),
           tags$li("Coin toss function will be disabled for the FedEx Play-Off events (i.e. the last three events)"),
           h2("Sponsors:"),
           tags$img(src = "baboost.jfif", width = "50%", height = "auto"),
@@ -631,7 +629,6 @@ server <- function(input, output, session) {
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(anonymous == "No") %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
@@ -641,7 +638,6 @@ server <- function(input, output, session) {
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(anonymous == "No") %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
@@ -652,7 +648,6 @@ server <- function(input, output, session) {
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(anonymous == "No") %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
@@ -663,7 +658,6 @@ server <- function(input, output, session) {
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(anonymous == "No") %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
@@ -674,7 +668,6 @@ server <- function(input, output, session) {
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(anonymous == "No") %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
@@ -684,7 +677,6 @@ server <- function(input, output, session) {
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(anonymous == "No") %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
@@ -694,7 +686,6 @@ server <- function(input, output, session) {
       group_by(event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      filter(anonymous == "No") %>%
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
@@ -704,7 +695,6 @@ server <- function(input, output, session) {
     
     
     new_entry <- tibble( input_date = as.POSIXct(Sys.time()), 
-                         anonymous = input$anon,
                          event_name = input$event_name, 
                          player_name = input$player_name, 
                          golfer1 = input$golfer1, 
@@ -799,7 +789,7 @@ server <- function(input, output, session) {
                  group_by(player_name, event_name) %>%
                  slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
                  ungroup() %>%
-                 select(input_date, anonymous, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss)
+                 select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss)
                
                # Save updated data
                update_google_sheet(df)

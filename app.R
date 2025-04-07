@@ -273,6 +273,36 @@ ui <- dashboardPage(
       tabItem(
         tabName = "main",
         
+        fluidRow(
+          h4("Standings", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
+          hr(),
+          box(
+            title = "",
+            status = "primary",
+            solidHeader = TRUE,
+            highchartOutput("leaderboard_plot")
+          ),
+          box(
+            title = "",
+            status = "primary",
+            solidHeader = TRUE,
+            highchartOutput("time_series_plot")
+          ),
+          box(
+            title = "",
+            status = "primary",
+            solidHeader = TRUE,
+            highchartOutput("cumulative_plot")
+          ),
+          box(
+            title = "",
+            status = "primary",
+            solidHeader = TRUE,
+            highchartOutput("top_25_plot")
+          ),
+          hr()
+        ),
+        
         ### Collapsible boxes for each player's picks
         fluidRow(
           h4("Future tournament picks", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
@@ -338,35 +368,6 @@ ui <- dashboardPage(
             solidHeader = TRUE,
             collapsible = TRUE,
             tableOutput("jive_picks_table")
-          )
-        ),
-        fluidRow(
-          hr(),
-          h4("Standings", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
-          hr(),
-          box(
-            title = "",
-            status = "primary",
-            solidHeader = TRUE,
-            highchartOutput("leaderboard_plot")
-          ),
-          box(
-            title = "",
-            status = "primary",
-            solidHeader = TRUE,
-            highchartOutput("time_series_plot")
-          ),
-          box(
-            title = "",
-            status = "primary",
-            solidHeader = TRUE,
-            highchartOutput("cumulative_plot")
-          ),
-          box(
-            title = "",
-            status = "primary",
-            solidHeader = TRUE,
-            highchartOutput("top_3_plot")
           )
         )
       ),
@@ -892,41 +893,41 @@ server <- function(input, output, session) {
     })
   
   ####
-  # TOP 3
+  # TOP 25 picked players
   ####
-  output$top_3_plot <- renderHighchart({
+  output$top_25_plot <- renderHighchart({
+    
+  top_25 <- data.frame(read.csv("data/datagolf_rankingsFEB2025.csv")) %>%
+    mutate(rank = row_number()) %>%
+    slice_min(order_by = rank, n = 25)
+  
+  
   df <- data() %>%
     # only look at events that have been played
     filter(event_occured) %>%
     # only use latest pick per player / tournament
     group_by(player_name, event_name) %>%
     slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
-    mutate(event_pick_g1 = paste(golfer1, "@", event_name),
-           event_pick_g2 = paste(golfer2, "@", event_name)) %>%
     ungroup() %>%
-    select(player_name, event_pick_g1, event_pick_g2, earnings_g1, earnings_g2) %>%
+    select(player_name, golfer1, golfer2) %>%
     pivot_longer(
-      cols = starts_with("event_pick") | starts_with("earnings"),
-      names_to = c(".value", "game"),
-      names_sep = "_g"
-    ) %>%
+      cols = starts_with("golfer"),
+      names_to = "picks") %>%
+    select(player_name, value) %>%
+    inner_join(top_25, by = c("value" = "player_name")) %>%
     group_by(player_name) %>%
-    slice_max(order_by = earnings, n = 3, with_ties = FALSE) %>%
-    arrange(desc(earnings), .by_group = TRUE) %>%
-    ungroup() %>%
-    mutate(event_pick = factor(event_pick, levels = unique(event_pick))) 
+    summarise(nbr_top_25 = n()) %>%
+    arrange(desc(nbr_top_25))
   
   
-  hchart(df, "bar", hcaes(x = player_name, y = earnings, group = event_pick)) %>%
+  
+  hchart(df, "bar", hcaes(x = player_name, y = nbr_top_25, color = player_name)) %>%
     hc_chart(inverted = TRUE) %>%  # Make the chart horizontal
     hc_xAxis(title = list(text = "Player Name")) %>%
-    hc_yAxis(title = list(text = "Earnings")) %>%
-    hc_title(text = "Top 3 picks") %>%
-    hc_tooltip(
-      pointFormat = "<b>{point.event_pick}</b><br>Earnings: ${point.y:,.0f}"
-    ) %>%
-    hc_legend(enabled = FALSE) %>%
-    hc_plotOptions(bar = list(dataLabels = list(enabled = TRUE, format = "${point.y:,.0f}")))
+    hc_yAxis(title = list(text = "Count")) %>%
+    hc_title(text = "Number of Top 25 golfers picked") %>%
+    hc_caption(text = "Footnote: Data Golf rankings Febuary 2025", style = list(fontSize = "10px", color = "#777777"))
+  
   })  
   
   ########

@@ -162,7 +162,7 @@ ui <- dashboardPage(
     title = tags$span(
       # tags$img(src = "pif.png", height = "30px", style = "margin-right: 30px;"),
       # tags$img(src = "pga.png", height = "30px", style = "margin-right: 30px;")
-        tags$img(src = "masters.jpg", height = "30px", style = "margin-right: 30px;")
+        tags$img(src = "masters.png", height = "30px", style = "margin-right: 30px;")
   )),
   
   # Dashboard sidebar

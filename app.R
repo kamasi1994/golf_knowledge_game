@@ -589,6 +589,8 @@ server <- function(input, output, session) {
       pivot_longer(cols = c("golfer1", "golfer2"),
                    values_to = "golfer") %>%
       select(event_name, player_name, golfer) %>%
+      # temporary naming fix for the masters
+      mutate(event_name = if_else(event_name == "The Masters", "Masters Tournament", event_name)) %>%
       left_join(live_scores(), by = c("event_name", "golfer")) 
   
     # Clean the positions column

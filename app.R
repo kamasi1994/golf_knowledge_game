@@ -780,7 +780,8 @@ server <- function(input, output, session) {
                  
       
                # Update earnings 
-               df <- data() %>% 
+               df <- data() %>%
+                 mutate(event_name = if_else(event_name == "The Masters", "Masters Tournament", event_name)) %>% # temp fix for masters
                  left_join(earnings, by = c("event_name", "golfer1" = "golfer_name", "coin_toss")) %>%
                  mutate(earnings_g1 = if_else(coin_toss == TRUE, earnings_g1, earnings)) %>% # if coin was tossed, preserve existing earnings
                  select(-earnings) %>%
@@ -834,7 +835,7 @@ server <- function(input, output, session) {
   # Time series plot 
   ####
   output$time_series_plot <- renderHighchart({ 
-    df <- data() %>%
+    df <-data() %>%
       # only use latest pick per player / tournament
       group_by(player_name, event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%

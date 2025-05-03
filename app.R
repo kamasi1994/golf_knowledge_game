@@ -295,6 +295,12 @@ ui <- dashboardPage(
             title = "",
             status = "primary",
             solidHeader = TRUE,
+            highchartOutput("big_dog_sankey")
+          ),
+          box(
+            title = "",
+            status = "primary",
+            solidHeader = TRUE,
             highchartOutput("top_25_plot")
           ),
           hr()
@@ -925,6 +931,68 @@ server <- function(input, output, session) {
   
   })  
   
+  ####
+  # Who still has the big dog golfers
+  ####
+  
+  output$big_dog_sankey <- renderHighchart({
+    
+    big_dogs <- c("Rory McIlroy", "Scottie Scheffler", "Bryson DeChambeau", "Jon Rahm")
+    
+    big_dogs_picked <- data() %>%
+      # only look at events that have been played
+      filter(event_occured) %>%
+      # only use latest pick per player / tournament
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      select(player_name, golfer1, golfer2) %>%
+      pivot_longer(
+        cols = starts_with("golfer"),
+        names_to = "picks",
+        values_to = "already_picked") %>%
+      filter(already_picked %in% big_dogs) %>%
+      mutate(already_picked_flag = TRUE) %>%
+      select(player_name, already_picked, already_picked_flag)
+    
+    all_players <- c("Conor", "Chris", "Jive", "Eddie", "Phil", "Shane", "Sean")
+    
+    
+    sankey_data <- expand.grid(player_name = all_players,
+               golfers = big_dogs) %>%
+      anti_join(big_dogs_picked, by = c("player_name", "golfers" = "already_picked")) %>%
+      rename(from = player_name,
+             to = golfers) %>%
+      mutate(weight = 1)
+    
+    highchart() %>%
+      hc_chart(type = "sankey") %>%
+      hc_add_series(
+        data = sankey_data,
+        type = "sankey",
+        name = "Player to Golfer Connections"
+      ) %>%
+      hc_title(text = "Big Dog Golfers") %>%
+      hc_subtitle(text = "Who still has these golfers in their arsenal?") %>%
+      hc_plotOptions(
+        sankey = list(
+          dataLabels = list(
+            enabled = TRUE,
+            style = list(
+              fontWeight = "bold",
+              textOutline = "none"
+            )
+          ),
+          nodeWidth = 20,
+          nodePadding = 10
+        )
+      ) %>%
+      hc_tooltip(
+        headerFormat = "",
+        pointFormat = "{point.from} → {point.to}"
+      )
+  })
+    
   ########
   # coin flip processing
   ########

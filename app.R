@@ -71,22 +71,28 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th
      html_nodes(".headline.headline__h1.Leaderboard__Event__Title") %>%
      html_text()
    
-   df <- read_html("https://www.espn.com/golf/leaderboard") %>%
-   html_nodes(".tl.Table__TD") %>%
-   html_text() %>%
-   matrix(ncol = 2, byrow = TRUE) %>%
-   as.data.frame(stringsasFactors = FALSE) %>%
-   mutate(V2 = stri_trans_general(V2, "Latin-ASCII"),
-          event_name = event_name)
-   
-  colnames(df) <- c("position", "golfer", "event_name")
- 
-  # if average lenght of position string is > 5 then the scraper has picked up data espn.com that only shows if the event hasnt started
-  if(mean(str_length(df$position)) > 5){
-    df <- NULL
-  }
-
-  return(df)
+   tryCatch({
+     df <-  read_html("https://www.espn.com/golf/leaderboard") %>%
+         html_nodes(".tl.Table__TD") %>%
+         html_text() %>%
+         matrix(ncol = 2, byrow = TRUE) %>%
+         as.data.frame(stringsasFactors = FALSE) %>%
+         mutate(V2 = stri_trans_general(V2, "Latin-ASCII"),
+                event_name = event_name)
+     
+     colnames(df) <- c("position", "golfer", "event_name")
+     
+     # if average length of position string is > 5 then the scraper has picked up
+     # data that espn.com only shows if the event hasn't started yet
+     if(mean(str_length(df$position)) > 5){
+       df <- NULL
+     }
+     
+     return(df)
+       
+   }, error = function(e){
+     return(NULL)
+   })
  }
    
    
@@ -937,7 +943,7 @@ server <- function(input, output, session) {
   
   output$big_dog_sankey <- renderHighchart({
     
-    big_dogs <- c("Rory McIlroy", "Scottie Scheffler", "Bryson DeChambeau", "Jon Rahm")
+    big_dogs <- c("Rory McIlroy", "Scottie Scheffler", "Bryson DeChambeau")
     
     big_dogs_picked <- data() %>%
       # only look at events that have been played

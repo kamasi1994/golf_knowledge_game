@@ -124,7 +124,8 @@ scrape_pga_prize_money <- function(golfer_name) {
   data <- data.frame(golfer_name = golfer_name, event_name = tournaments, earnings = earnings) %>%
     mutate(earnings = if_else(earnings == "--", "0", earnings), # handle NAs (from missed cuts)
            earnings = as.numeric(gsub("[\\$,]", "", earnings)),
-           coin_toss = FALSE) # add a FALSE coin toss column so that only records that havent been gambled are updated 
+           coin_toss = FALSE, # add a FALSE coin toss column so that only records that havent been gambled are updated
+           scraped = FALSE) # add a FALSE scraped column so that only records that havent already been scraped are updated 
   
   return(data)
   }
@@ -718,7 +719,8 @@ server <- function(input, output, session) {
                          earnings_g1 = NA,
                          earnings_g2 = NA,
                          event_occured = FALSE,
-                         coin_toss = FALSE)
+                         coin_toss = FALSE,
+                         scraped = FALSE)
 
     
     # data before submission of new picks
@@ -774,7 +776,7 @@ server <- function(input, output, session) {
                # Get earnings data
                # loop the web scraping function over all golfers selected for this week
                all_golfers_selected <- data() %>%
-                 # filter(is.na(earnings_g1) | is.na(earnings_g2)) %>% # only scrape player data for records that have dont have any earnings figures yet
+                 filter(!scraped) %>% # only scrape player data for records that have dont have any earnings figures yet
                  select(golfer1, golfer2) %>%
                  pivot_longer(cols = c("golfer1", "golfer2")) %>%
                  unique() %>%
@@ -790,8 +792,12 @@ server <- function(input, output, session) {
                earnings <- do.call(rbind, earnings_list) 
                  
       
-               # Update earnings 
-               df <- data() %>%
+               # Update earnings
+               already_scraped <- data() %>%
+                 filter(scraped)
+               
+               df_new <- data() %>%
+                 filter(!scraped) %>%
                  mutate(event_name = if_else(event_name == "The Masters", "Masters Tournament", event_name)) %>% # temp fix for masters
                  left_join(earnings, by = c("event_name", "golfer1" = "golfer_name", "coin_toss")) %>%
                  # if coin was tossed, preserve existing earnings
@@ -803,14 +809,19 @@ server <- function(input, output, session) {
                  # preserve existing earnings for zurich classic because no earnings exists on espn webpage
                  mutate(earnings_g2 = if_else(coin_toss == TRUE | event_name == "Zurich Classic of New Orleans", earnings_g2, earnings)) %>% 
                  select(-earnings) %>%
-                 # update event_corrected flag if current date is >= 5 days after event deadline/startd
+                 # update event_corrected flag if current date is >= 5 days after event deadline
                  left_join(read.csv("data/events.csv"), by = "event_name") %>%
                  mutate(event_occured = if_else(as.POSIXct(Sys.time()) >= as.Date(deadline, format = "%d/%m/%Y/%H:%M")  + 4, TRUE, FALSE)) %>% 
+                 # update scraped flag if earnings were successfully scraped
+                 mutate(scraped = if_else(is.na(earnings_g1) & is.na(earnings_g2), FALSE, TRUE)) %>%
                  replace_na(list(earnings_g1 = 0, earnings_g2 = 0)) %>%
                  group_by(player_name, event_name) %>%
                  slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
                  ungroup() %>%
-                 select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss)
+                 select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss, scraped)
+               
+               df <- bind_rows(already_scraped, df_new) %>%
+                 arrange(player_name, event_name)
                
                # Save updated data
                update_google_sheet(df)

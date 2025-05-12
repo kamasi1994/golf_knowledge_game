@@ -794,10 +794,14 @@ server <- function(input, output, session) {
                df <- data() %>%
                  mutate(event_name = if_else(event_name == "The Masters", "Masters Tournament", event_name)) %>% # temp fix for masters
                  left_join(earnings, by = c("event_name", "golfer1" = "golfer_name", "coin_toss")) %>%
-                 mutate(earnings_g1 = if_else(coin_toss == TRUE, earnings_g1, earnings)) %>% # if coin was tossed, preserve existing earnings
+                 # if coin was tossed, preserve existing earnings
+                 # # preserve existing earnings for zurich classic because no earnings exists on espn webpage
+                 mutate(earnings_g1 = if_else(coin_toss == TRUE | event_name == "Zurich Classic of New Orleans", earnings_g1, earnings)) %>% 
                  select(-earnings) %>%
                  left_join(earnings, by = c("event_name", "golfer2" = "golfer_name", "coin_toss")) %>%
-                 mutate(earnings_g2 = if_else(coin_toss == TRUE, earnings_g2, earnings)) %>% # if coin was tossed, preserve existing earnings
+                 # if coin was tossed, preserve existing earnings
+                 # preserve existing earnings for zurich classic because no earnings exists on espn webpage
+                 mutate(earnings_g2 = if_else(coin_toss == TRUE | event_name == "Zurich Classic of New Orleans", earnings_g2, earnings)) %>% 
                  select(-earnings) %>%
                  # update event_corrected flag if current date is >= 5 days after event deadline/startd
                  left_join(read.csv("data/events.csv"), by = "event_name") %>%

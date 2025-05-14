@@ -438,7 +438,7 @@ ui <- dashboardPage(
       "))),
         
         # Input for user name
-        selectInput("coin_user_name", "Enter Your Name", choices = c("Conor", "Shane", "Sean", "Chris", "Phil", "Eddie")),
+        selectInput("coin_user_name", "Enter Your Name", choices = c("Jive", "Conor", "Shane", "Sean", "Chris", "Phil", "Eddie")),
         
         # Radio buttons for user to choose Heads or Tails
         radioButtons("user_choice", "Choose Heads or Tails:",

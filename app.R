@@ -963,7 +963,7 @@ server <- function(input, output, session) {
   
   output$big_dog_sankey <- renderHighchart({
     
-    big_dogs <- c("Rory McIlroy", "Scottie Scheffler", "Bryson DeChambeau")
+    big_dogs <- c("Rory McIlroy", "Scottie Scheffler", "Bryson DeChambeau", "Xander Schauffele", "Justin Thomas")
     
     big_dogs_picked <- data() %>%
       # only look at events that have been played
@@ -998,7 +998,7 @@ server <- function(input, output, session) {
         type = "sankey",
         name = "Player to Golfer Connections"
       ) %>%
-      hc_title(text = "Big Dog Golfers") %>%
+      hc_title(text = "Big Dog Golfers (DataGolf.com top 5 players)") %>%
       hc_subtitle(text = "Who still has these golfers in their arsenal?") %>%
       hc_plotOptions(
         sankey = list(

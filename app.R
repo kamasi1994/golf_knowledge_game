@@ -775,7 +775,7 @@ server <- function(input, output, session) {
                  
                # Get earnings data
                # loop the web scraping function over all golfers selected for this week
-               all_golfers_selected <- data() %>%
+               all_golfers_selected <- test %>%
                  filter(!scraped) %>% # only scrape player data for records that have dont have any earnings figures yet
                  select(golfer1, golfer2) %>%
                  pivot_longer(cols = c("golfer1", "golfer2")) %>%
@@ -794,7 +794,12 @@ server <- function(input, output, session) {
       
                # Update earnings
                already_scraped <- data() %>%
-                 filter(scraped)
+                 filter(scraped) %>%
+                 group_by(player_name, event_name) %>%
+                 slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+                 ungroup() %>%
+                 select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss, scraped)
+               
                
                df_new <- data() %>%
                  filter(!scraped) %>%

@@ -473,6 +473,7 @@ ui <- dashboardPage(
           tags$li("€75 for second place"),
           tags$li("€25 for third place"),
           tags$li("Coin toss function will be disabled for the FedEx Play-Off events (i.e. the last three events)"),
+          tags$li("Due to the nature of the Fedex Cup leader starting on -10 in the Tour Championship, we will randomly assign two golfers to each person for this final event"),
           h2("Sponsors:"),
           tags$img(src = "baboost.jfif", width = "50%", height = "auto"),
           tags$img(src = "pif.png",  width = "50%", height = "auto"),

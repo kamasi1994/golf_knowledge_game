@@ -43,7 +43,7 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th
 # jsonstring <- gsub('"', '\\"', jsonstring)
 # cat(jsonstring)
 
-# test <- read_sheet(sheet_url)
+test <- read_sheet(sheet_url)
 #############################################################
 # Necessary functions
 #############################################################
@@ -822,9 +822,12 @@ server <- function(input, output, session) {
                  select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss, scraped)
                
                
-               df_new <- data() %>%
+               df_new <- data()  %>%
                  filter(!scraped) %>%
-                 mutate(event_name = if_else(event_name == "The Masters", "Masters Tournament", event_name)) %>% # temp fix for masters
+                 mutate(event_name = case_when(
+                   event_name == "The Masters" ~ "Masters Tournament", 
+                   event_name == "The Open Championship" ~ "The Open",
+                   .default = event_name)) %>%
                  left_join(earnings, by = c("event_name", "golfer1" = "golfer_name", "coin_toss")) %>%
                  # if coin was tossed, preserve existing earnings
                  # # preserve existing earnings for zurich classic because no earnings exists on espn webpage

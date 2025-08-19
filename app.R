@@ -826,7 +826,6 @@ server <- function(input, output, session) {
                  filter(!scraped) %>%
                  mutate(event_name = case_when(
                    event_name == "The Masters" ~ "Masters Tournament", 
-                   event_name == "The Open Championship" ~ "The Open",
                    .default = event_name)) %>%
                  left_join(earnings, by = c("event_name", "golfer1" = "golfer_name", "coin_toss")) %>%
                  # if coin was tossed, preserve existing earnings

@@ -43,66 +43,79 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th
 # jsonstring <- gsub('"', '\\"', jsonstring)
 # cat(jsonstring)
 
-test <- read_sheet(sheet_url)
+test <- read_sheet(sheet_url, sheet = "2026")
 #############################################################
 # Necessary functions
 #############################################################
 
-# Function to get the Player ID's of the top 200 golfers (needed to scrape earnings data on espn.com)
-# no longer needed as a csv file has been created containinng urls for the data golf rankings top players
-# I did this due to the many incorrect spelling names in espn urls, so a function with a player name as the input didnt work all the time
-# scrape_top_200_payer_ids <- function(){
-#   
-#   # get urls for top 200 players in world
-#   top_200_page <- read_html("https://www.espn.com/golf/rankings")
-#   
-#   player_links <- top_200_page %>%
-#     html_nodes(".AnchorLink") %>%
-#     html_attr("href") %>%
-#     .[grepl("/golf/player/_/id/", .)]
-#   
-#   return(player_links)
-# }
-
- # Function to get live scores
- get_live_scores <- function(){
+#############
+# scrape tournament odds
+#############
+get_odds <- function(){
+  
+  odds <- read_html("http://golfodds.com/weekly-odds.html")
+  
+  event_odds_name <- odds %>%
+    html_element(".Headline-orange") %>%
+    html_text()
+  
+  event_odds_table <- odds %>%
+    html_element(".Copy-black") %>%
+    html_table() %>%
+    filter(row_number() != 1) %>%
+    rename(player_name = X1,
+           odds = X2) %>%
+    slice(1:which(player_name == "")[1] - 1)
+  
+  return(
+    list(
+      event_odds_name = event_odds_name,
+      event_odds_table = event_odds_table
+    )
+  )
+}
+#############
+# Function to get live scores
+#############
+get_live_scores <- function(){
+ 
+ event_name <- read_html("https://www.espn.com/golf/leaderboard") %>%
+   html_nodes(".headline.headline__h1.Leaderboard__Event__Title") %>%
+   html_text()
+ 
+ tryCatch({
+   df <-  read_html("https://www.espn.com/golf/leaderboard") %>%
+       html_nodes(".tl.Table__TD") %>%
+       html_text() %>%
+       matrix(ncol = 2, byrow = TRUE) %>%
+       as.data.frame(stringsasFactors = FALSE) %>%
+       mutate(V2 = stri_trans_general(V2, "Latin-ASCII"),
+              event_name = event_name)
    
-   event_name <- read_html("https://www.espn.com/golf/leaderboard") %>%
-     html_nodes(".headline.headline__h1.Leaderboard__Event__Title") %>%
-     html_text()
+   colnames(df) <- c("position", "golfer", "event_name")
    
-   tryCatch({
-     df <-  read_html("https://www.espn.com/golf/leaderboard") %>%
-         html_nodes(".tl.Table__TD") %>%
-         html_text() %>%
-         matrix(ncol = 2, byrow = TRUE) %>%
-         as.data.frame(stringsasFactors = FALSE) %>%
-         mutate(V2 = stri_trans_general(V2, "Latin-ASCII"),
-                event_name = event_name)
+   # if average length of position string is > 5 then the scraper has picked up
+   # data that espn.com only shows if the event hasn't started yet
+   if(mean(str_length(df$position)) > 5){
+     df <- NULL
+   }
+   
+   return(df)
      
-     colnames(df) <- c("position", "golfer", "event_name")
-     
-     # if average length of position string is > 5 then the scraper has picked up
-     # data that espn.com only shows if the event hasn't started yet
-     if(mean(str_length(df$position)) > 5){
-       df <- NULL
-     }
-     
-     return(df)
-       
-   }, error = function(e){
-     return(NULL)
-   })
- }
+ }, error = function(e){
+   return(NULL)
+ })
+}
    
-   
+#############   
 # Function to scrape prize money data 
+#############
 scrape_pga_prize_money <- function(golfer_name) { 
   
   # find player name in player url file (player_urls.csv)
   # this has the espn.com urls for the top 300 players according to data golf (so includes liv players)
   player_link <- read.csv("data/player_urls.csv") %>%
-    filter(dg_ranking_name == golfer_name) %>%
+    filter(name == golfer_name) %>%
     select(url) %>%
     pull()
   
@@ -114,39 +127,56 @@ scrape_pga_prize_money <- function(golfer_name) {
     html_nodes(".tar.Table__TD") %>%
     html_text()
   
-  # get corresponding tournament name
-  tournaments <- player_page %>%
-    html_nodes(".LastTournamentTable__name") %>%
-    html_nodes(".AnchorLink") %>%
-    html_text() 
+  if(length(earnings) == 0){
+    return(data.frame(golfer_name = golfer_name, 
+                      event_name = character(1), 
+                      earnings = numeric(1), 
+                      coin_toss = FALSE, 
+                      scraped = FALSE))
+  } else {
   
-  # combine
-  data <- data.frame(golfer_name = golfer_name, event_name = tournaments, earnings = earnings) %>%
-    mutate(earnings = if_else(earnings == "--", "0", earnings), # handle NAs (from missed cuts)
-           earnings = as.numeric(gsub("[\\$,]", "", earnings)),
-           coin_toss = FALSE, # add a FALSE coin toss column so that only records that havent been gambled are updated
-           scraped = FALSE) # add a FALSE scraped column so that only records that havent already been scraped are updated 
-  
-  return(data)
+    # get corresponding tournament name
+    tournaments <- player_page %>%
+      html_nodes(".LastTournamentTable__name") %>%
+      html_nodes(".AnchorLink") %>%
+      html_text() 
+    
+    # combine
+    data <- data.frame(golfer_name = golfer_name, event_name = tournaments, earnings = earnings) %>%
+      mutate(earnings = if_else(earnings == "--", "0", earnings), # handle NAs (from missed cuts)
+             earnings = as.numeric(gsub("[\\$,]", "", earnings)),
+             coin_toss = FALSE, # add a FALSE coin toss column so that only records that havent been gambled are updated
+             scraped = FALSE) # add a FALSE scraped column so that only records that havent already been scraped are updated 
+    
+    return(data)
   }
+}
 
+#############
 # load earnings prediction model
+#############
 earnings_pred_model <- readRDS("data/earnings_model.rds")
 
-
+#############
 # Functions to update Google Sheet 
+#############
 update_google_sheet <- function(new_data) { 
-  sheet_write(new_data, ss = sheet_url, sheet = "Sheet1") } 
+  sheet_write(new_data, ss = sheet_url, sheet = "2026") } 
 
 append_google_sheet <- function(new_data) { 
-  sheet_append(ss = sheet_url, new_data) } 
+  sheet_append(new_data, ss = sheet_url, sheet = "2026") } 
 
+#############
 # get list of future events
+#############
 event_list <- read_csv("data/events.csv", show_col_types = FALSE) %>%
   filter(as.POSIXct(deadline, format = "%d/%m/%Y/%H:%M") > as.POSIXct(Sys.time())) %>% 
   select(event_name) %>%
   pull()
 
+#############
+# styling
+#############
 masters_theme <- create_theme(
   adminlte_color(
     light_blue = "#004D40", # Change the primary color to Masters Green
@@ -175,9 +205,9 @@ ui <- dashboardPage(
   dashboardSidebar(
     width = 200,
     sidebarMenu(
-      menuItem("Enter Picks", tabName = "picks", icon = icon("user")),
+      menuItem("Enter Picks", tabName = "picks", icon = icon("user"), selected = TRUE),
       menuItem("Live Leaderboard", tabName = "leaderboard", icon = icon("chart-line")),
-      menuItem("Dashboard", tabName = "main", icon = icon("dashboard"), selected = TRUE),
+      menuItem("Dashboard", tabName = "main", icon = icon("dashboard")),
       menuItem("Feeling lucky?", tabName = "coin", icon = icon("dice")),
       menuItem("Game Rules", tabName = "game_rules", icon = icon("info-circle")),
       menuItem("Admin", tabName = "admin", icon = icon("wrench"))
@@ -222,24 +252,26 @@ ui <- dashboardPage(
       #################
       tabItem(
         tabName = "picks",
-        h1("Enter tournament picks:"),
+        h1("Enter tournament picks:", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),
         selectInput("event_name", "Tournament", choices = event_list),
         selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris", "Phil", "Eddie", "Jive")),
         selectizeInput(inputId = "golfer1",
                        label = "Golfer 1", 
                        selected = NULL,
-                       choices = read.csv("data/datagolf_rankingsFEB2025.csv")$player_name,
+                       choices = read.csv("data/dg_rankings_jan2026.csv")$name,
                        options = list(placeholder = 'Type to search...', maxOptions = 10)),
         selectizeInput(inputId = "golfer2",
                        label = "Golfer 2", 
                        selected = NULL,
-                       choices = read.csv("data/datagolf_rankingsFEB2025.csv")$player_name,
+                       choices = read.csv("data/dg_rankings_jan2026.csv")$name,
                        options = list(placeholder = 'Type to search...', maxOptions = 10)),
         actionButton("submit", "Submit Picks"),
         textOutput("thank_you_msg"),
         uiOutput("have_i_picked"),
         h4("Previously selected golfers", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
         DTOutput("prev_picked"),
+        h4(textOutput("event_odds_name"), style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
+        DTOutput("event_odds"),
         tags$div(style = "font-size: 8px; color: grey; text-align: center; margin-top: 20px;",
                  "Terms & Conditions: By using this platform, you agree to your personal data being sold to third parties. Albatross Analytics Ltd has 
                  contracts with biotech artifical organ research labs, advanced cybernetics firms, US government survelliance sub-contractors, far right think tanks, and Kildare County Council. By proceeding,
@@ -372,6 +404,24 @@ ui <- dashboardPage(
           ),
           box(
             title = tagList(
+              img(src = "ross.jfif", height = "60px", class = "circle-image"),
+              "Ross"),
+            status = "primary",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            tableOutput("ross_picks_table")
+          ),
+          box(
+            title = tagList(
+              img(src = "mark.jfif", height = "60px", class = "circle-image"),
+              "Mark"),
+            status = "primary",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            tableOutput("mark_picks_table")
+          ),
+          box(
+            title = tagList(
               img(src = "jive.jpg", height = "60px", class = "circle-image"),
               "Jive"),
             status = "primary",
@@ -438,7 +488,7 @@ ui <- dashboardPage(
       "))),
         
         # Input for user name
-        selectInput("coin_user_name", "Enter Your Name", choices = c("Jive", "Conor", "Shane", "Sean", "Chris", "Phil", "Eddie")),
+        selectInput("coin_user_name", "Enter Your Name", choices = c("Jive", "Conor", "Shane", "Sean", "Chris", "Phil", "Eddie", "Ross", "Mark")),
         
         # Radio buttons for user to choose Heads or Tails
         radioButtons("user_choice", "Choose Heads or Tails:",
@@ -466,12 +516,11 @@ ui <- dashboardPage(
           tags$li("Pick two players for each tournament"),
           tags$li("Picks must be submitted by midday on the Thursday of each tournament (6am for the Open Championship"),
           tags$li("You can only pick each player once throughout the season"),
-          tags$li("You can pick players in advance"),
           tags$li("Re-submitting your two golfers for a particular event will overwrite your previous selection"),
           tags$li("Winner will be the player with the most earnings at the end of the season (after Tour Championship)"),
-          tags$li("€250 for winner"),
-          tags$li("€75 for second place"),
-          tags$li("€25 for third place"),
+          tags$li("Prizes TBD"),
+          tags$li("After an official review into alleged abuse of the coin toss feature, it has been decided for the 2026 season that each player will be limited to 5 coin flips"),
+          tags$li("These 5 coin flips may be used at any stage throughout the season. Per usual, only the first flip is recorded."),
           tags$li("Coin toss function will be disabled for the FedEx Play-Off events (i.e. the last three events)"),
           h3(""),
           h3("🏌️Tour Championship Draft"),
@@ -508,6 +557,7 @@ ui <- dashboardPage(
         tabName = "admin",
         actionButton("update_data", "Update Prize Money"),
         h5("Press this to get latest tournament prize money from the web..."),
+        h5("ESPN.com usually has results and prize money from a Sunday finish by Monday afternoon"),
         progressBar(id = "progress", value = 0, total = 100, display_pct = TRUE)
       )
     )
@@ -517,8 +567,18 @@ ui <- dashboardPage(
 # Server 
 #############################################################
 server <- function(input, output, session) {
+  
+  observe({
+    showModal(modalDialog(
+      tags$div(style = "margin: - 15px - 20px -20px -20px;",
+               tags$img(src = "worm_bet.jfif",
+                        style = "width: 100%; height: auto; display: block;")
+      ), size = "s", easyClose = TRUE
+    ))
+  })
+  
   # Load data from Google Sheets 
-  data <- reactiveVal(read_sheet(sheet_url)) 
+  data <- reactiveVal(read_sheet(sheet_url, sheet = "2026")) 
   
   # hide thank you text before button is pressed
   thank_you_text <- reactiveVal((""))
@@ -549,6 +609,24 @@ server <- function(input, output, session) {
         paging = FALSE, 
         ordering = FALSE)
     )
+  })
+  
+  output$event_odds_name <- renderText({
+    paste("Odds for ", get_odds()$event_odds_name)
+  })
+  
+  # add a table of odds for the event
+  output$event_odds <- renderDT({
+    get_odds()$event_odds_table %>%
+      datatable(
+        colnames = c("Name", "Odds"),
+        escape = FALSE, 
+        rownames = FALSE, 
+        options = list(
+          searching = FALSE, 
+          paging = FALSE, 
+          ordering = FALSE)
+      )
   })
   
   # live scores
@@ -718,6 +796,24 @@ server <- function(input, output, session) {
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
+  output$ross_picks_table <- renderTable({
+    data() %>%
+      filter(!event_occured & player_name == "Ross") %>%
+      group_by(event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      select(event_name, golfer1, golfer2)
+  }, colnames = FALSE)
+  
+  output$mark_picks_table <- renderTable({
+    data() %>%
+      filter(!event_occured & player_name == "Mark") %>%
+      group_by(event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      select(event_name, golfer1, golfer2)
+  }, colnames = FALSE)
+  
   output$eddie_picks_table <- renderTable({
     data() %>%
       filter(!event_occured & player_name == "Eddie") %>%
@@ -741,9 +837,19 @@ server <- function(input, output, session) {
                          earnings_g2 = NA,
                          event_occured = FALSE,
                          coin_toss = FALSE,
-                         scraped = FALSE)
-
+                         scraped = FALSE) 
     
+    # add odds
+    odds <- get_odds()$event_odds_table
+    
+    new_entry <- new_entry %>%
+      left_join(odds, by = c("golfer1" = "player_name")) %>%
+      mutate(odds_g1 = odds) %>%
+      select(-odds) %>%
+      left_join(odds, by = c("golfer2" = "player_name")) %>%
+      mutate(odds_g2 = odds) %>%
+      select(-odds)
+
     # data before submission of new picks
     old <- data()
     
@@ -776,7 +882,7 @@ server <- function(input, output, session) {
     
     
     # reload data
-    data(read_sheet(sheet_url))
+    data(read_sheet(sheet_url, sheet = "2026"))
     
     }) 
   
@@ -819,7 +925,7 @@ server <- function(input, output, session) {
                  group_by(player_name, event_name) %>%
                  slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
                  ungroup() %>%
-                 select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss, scraped)
+                 select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss, scraped, odds_g1, odds_g2)
                
                
                df_new <- data()  %>%
@@ -829,13 +935,11 @@ server <- function(input, output, session) {
                    .default = event_name)) %>%
                  left_join(earnings, by = c("event_name", "golfer1" = "golfer_name", "coin_toss")) %>%
                  # if coin was tossed, preserve existing earnings
-                 # # preserve existing earnings for zurich classic because no earnings exists on espn webpage
-                 mutate(earnings_g1 = if_else(coin_toss == TRUE | event_name == "Zurich Classic of New Orleans", earnings_g1, earnings)) %>% 
+                 mutate(earnings_g1 = if_else(coin_toss == TRUE, earnings_g1, earnings)) %>% 
                  select(-earnings) %>%
                  left_join(earnings, by = c("event_name", "golfer2" = "golfer_name", "coin_toss")) %>%
                  # if coin was tossed, preserve existing earnings
-                 # preserve existing earnings for zurich classic because no earnings exists on espn webpage
-                 mutate(earnings_g2 = if_else(coin_toss == TRUE | event_name == "Zurich Classic of New Orleans", earnings_g2, earnings)) %>% 
+                 mutate(earnings_g2 = if_else(coin_toss == TRUE, earnings_g2, earnings)) %>% 
                  select(-earnings) %>%
                  # update event_corrected flag if current date is >= 5 days after event deadline
                  left_join(read.csv("data/events.csv"), by = "event_name") %>%
@@ -846,14 +950,31 @@ server <- function(input, output, session) {
                  group_by(player_name, event_name) %>%
                  slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
                  ungroup() %>%
-                 select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss, scraped)
+                 select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss, scraped, odds_g1, odds_g2)
                
-               df <- bind_rows(already_scraped, df_new) %>%
-                 arrange(player_name, event_name)
+               # double earnings if odds >= 100/1
+               df_new <- df_new %>%
+                 mutate(
+                   prob_g1 = {
+                     x <- strsplit(odds_g1, "/")
+                     as.numeric(sapply(x, `[`, 1)) / as.numeric(sapply(x, `[`, 2))
+                   },
+                   prob_g2 = {
+                     x <- strsplit(odds_g1, "/")
+                     as.numeric(sapply(x, `[`, 1)) / as.numeric(sapply(x, `[`, 2))
+                   }
+                 ) %>%
+                 mutate(
+                   earnings_g1 = if_else(prob_g1 >= 100, earnings_g1 * 2, earnings_g1),
+                   earnings_g2 = if_else(prob_g2 >= 100, earnings_g2 * 2, earnings_g2)
+                 ) %>%
+                 select(-prob_g1, -prob_g2)
+                   
                
                # Save updated data
+               df <- bind_rows(already_scraped, df_new)
                update_google_sheet(df)
-               data(read_sheet(sheet_url)) 
+               data(read_sheet(sheet_url, sheet = "2026")) 
                
                #simulate final scraped progress bar
                showNotification("Scraping complete!...For any technical support please contact Rajeesh Masala Peshwari Naan Prescott",
@@ -947,7 +1068,7 @@ server <- function(input, output, session) {
   ####
   output$top_25_plot <- renderHighchart({
     
-  top_25 <- data.frame(read.csv("data/datagolf_rankingsFEB2025.csv")) %>%
+  top_25 <- data.frame(read.csv("data/dg_rankings_jan2026.csv")) %>%
     mutate(rank = row_number()) %>%
     slice_min(order_by = rank, n = 25)
   
@@ -964,7 +1085,7 @@ server <- function(input, output, session) {
       cols = starts_with("golfer"),
       names_to = "picks") %>%
     select(player_name, value) %>%
-    inner_join(top_25, by = c("value" = "player_name")) %>%
+    inner_join(top_25, by = c("value" = "name")) %>%
     group_by(player_name) %>%
     summarise(nbr_top_25 = n()) %>%
     arrange(desc(nbr_top_25))
@@ -975,8 +1096,8 @@ server <- function(input, output, session) {
     hc_chart(inverted = TRUE) %>%  # Make the chart horizontal
     hc_xAxis(title = list(text = "Player Name")) %>%
     hc_yAxis(title = list(text = "Count")) %>%
-    hc_title(text = "Number of Top 25 golfers picked") %>%
-    hc_caption(text = "Footnote: Data Golf rankings Febuary 2025", style = list(fontSize = "10px", color = "#777777"))
+    hc_title(text = "Number of Top 25 ranked golfers picked") %>%
+    hc_caption(text = "Footnote: Data Golf rankings January 2026", style = list(fontSize = "10px", color = "#777777"))
   
   })  
   
@@ -986,7 +1107,7 @@ server <- function(input, output, session) {
   
   output$big_dog_sankey <- renderHighchart({
     
-    big_dogs <- c("Rory McIlroy", "Scottie Scheffler", "Bryson DeChambeau", "Xander Schauffele", "Justin Thomas")
+    big_dogs <- c("Rory McIlroy", "Scottie Scheffler", "Jon Rahm", "Tommy Fleetwood")
     
     big_dogs_picked <- data() %>%
       # only look at events that have been played
@@ -1004,7 +1125,7 @@ server <- function(input, output, session) {
       mutate(already_picked_flag = TRUE) %>%
       select(player_name, already_picked, already_picked_flag)
     
-    all_players <- c("Conor", "Chris", "Jive", "Eddie", "Phil", "Shane", "Sean")
+    all_players <- c("Conor", "Chris", "Jive", "Eddie", "Phil", "Shane", "Sean", "Mark", "Ross")
     
     
     sankey_data <- expand.grid(player_name = all_players,
@@ -1109,7 +1230,7 @@ server <- function(input, output, session) {
          append_google_sheet(df_new)
          
          # update data for charts
-         data(read_sheet(sheet_url)) 
+         data(read_sheet(sheet_url, sheet = "2026")) 
      } 
     
     else {
@@ -1129,7 +1250,7 @@ server <- function(input, output, session) {
      append_google_sheet(df_new)
      
      # update data for charts
-     data(read_sheet(sheet_url)) 
+     data(read_sheet(sheet_url, sheet = "2026")) 
     }
     
   })

@@ -55,7 +55,7 @@ dg_urls <- add_url("Jayden Schaper", "https://www.espn.com/golf/player/_/id/4604
 dg_urls <- add_url("Matt McCarty", "https://www.espn.com/golf/player/_/id/4901368/matt-mccarty")
 dg_urls <- add_url("Garrick Higgo", "https://www.espn.com/golf/player/_/id/11393/garrick-higgo")
 dg_urls <- add_url("Max McGreevy", "https://www.espn.com/golf/player/_/id/11383/max-mcgreevy")
-dg_urls <- add_url(" ", " ")
+dg_urls <- add_url("Dan Brown", "https://www.espn.com/golf/player/_/id/10221/daniel-brown")
 dg_urls <- add_url(" ", " ")
 dg_urls <- add_url(" ", " ")
 dg_urls <- add_url(" ", " ")
@@ -65,3 +65,4 @@ dg_urls <- add_url(" ", " ")
 dg_urls <- add_url(" ", " ")
 dg_urls <- add_url(" ", " ")
 
+write.csv(dg_urls, "data/player_urls.csv", row.names = F)

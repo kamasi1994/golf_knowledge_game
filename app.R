@@ -65,7 +65,15 @@ get_odds <- function(){
     filter(row_number() != 1) %>%
     rename(player_name = X1,
            odds = X2) %>%
-    slice(1:which(player_name == "")[1] - 1)
+    slice(1:which(player_name == "")[1] - 1) %>%
+    mutate(
+      odds_num = {
+        x <- strsplit(odds, "/")
+        as.numeric(sapply(x, `[`, 1)) / as.numeric(sapply(x, `[`, 2))
+      }) %>%
+    arrange(desc(odds_num)) %>%
+    select(-odds_num) %>%
+    mutate(event_name = event_odds_name)
   
   return(
     list(
@@ -422,6 +430,15 @@ ui <- dashboardPage(
           ),
           box(
             title = tagList(
+              img(src = "john.jfif", height = "60px", class = "circle-image"),
+              "John"),
+            status = "primary",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            tableOutput("john_picks_table")
+          ),
+          box(
+            title = tagList(
               img(src = "jive.jpg", height = "60px", class = "circle-image"),
               "Jive"),
             status = "primary",
@@ -488,7 +505,7 @@ ui <- dashboardPage(
       "))),
         
         # Input for user name
-        selectInput("coin_user_name", "Enter Your Name", choices = c("Jive", "Conor", "Shane", "Sean", "Chris", "Phil", "Eddie", "Ross", "Mark")),
+        selectInput("coin_user_name", "Enter Your Name", choices = c("Jive", "Conor", "Shane", "Sean", "Chris", "Phil", "Eddie", "Ross", "Mark", "John")),
         
         # Radio buttons for user to choose Heads or Tails
         radioButtons("user_choice", "Choose Heads or Tails:",
@@ -683,59 +700,59 @@ server <- function(input, output, session) {
     }
   })
   
-  # show live predicted earnings using random forest model
-  output$live_earnings_prediction <- renderHighchart({
-    
-    req(live_scores()) # Ensure data is available
-    
-    live_predicted_earnings <- data() %>%
-      filter(!event_occured) %>%
-      left_join(read.csv("data/events.csv"), by = "event_name") %>%
-      group_by(player_name, event_name) %>%
-      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>% # get latest pick per player x event
-      group_by(player_name) %>%
-      slice_min(order_by = order, n = 1, with_ties = FALSE) %>% # then get next un-played tournament
-      ungroup() %>%
-      select(event_name, player_name, golfer1, golfer2) %>%
-      pivot_longer(cols = c("golfer1", "golfer2"),
-                   values_to = "golfer") %>%
-      select(event_name, player_name, golfer) %>%
-      # temporary naming fix for the masters
-      mutate(event_name = if_else(event_name == "The Masters", "Masters Tournament", event_name)) %>%
-      left_join(live_scores(), by = c("event_name", "golfer")) 
-  
-    # Clean the positions column
-    live_predicted_earnings$adjusted_position <- gsub("T", "", live_predicted_earnings$position)  # Remove "T" from tied positions
-    live_predicted_earnings$adjusted_position <- as.numeric(live_predicted_earnings$adjusted_position)     # Convert to numeric
-  
-    # retain predicive power of tied places
-    # Adjust positions for ties
-    live_predicted_earnings <- live_predicted_earnings %>%
-      group_by(position) %>%
-      mutate(adjusted_position = ifelse(n() > 1, mean(adjusted_position + 0:(n() - 1)), adjusted_position)) %>%
-      ungroup() %>%
-      select(event_name, player_name, position, adjusted_position)
-  
-  
-    # Use the random forest model to predict earnings on live data
-    predicted_earnings <- predict(earnings_pred_model, live_predicted_earnings) 
-    
-
-    live_predicted_earnings %>%
-      mutate(predicted_earnings = if_else(adjusted_position > 65, 0, predicted_earnings)) %>%
-      select(player_name, position, predicted_earnings) %>%
-      group_by(player_name) %>%
-      summarise(predicted_earnings = sum(predicted_earnings, na.rm = T)) %>%
-      arrange(desc(predicted_earnings)) %>%
-      hchart("bar", hcaes(x = player_name, y = predicted_earnings, color = player_name)) %>%
-      hc_title(text = "Live Predicted Earnings") %>%
-      hc_yAxis(title = list(text = "Total Predicted Earnings")) %>%
-      hc_tooltip(
-        pointFormat = "<b>{point.player_name}</b><br>predicted_earnings: ${point.y:,.0f}"
-      ) 
-      
-  })
-  
+  # # show live predicted earnings using random forest model
+  # output$live_earnings_prediction <- renderHighchart({
+  #   
+  #   req(live_scores()) # Ensure data is available
+  #   
+  #   live_predicted_earnings <- data() %>%
+  #     filter(!event_occured) %>%
+  #     left_join(read.csv("data/events.csv"), by = "event_name") %>%
+  #     group_by(player_name, event_name) %>%
+  #     slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>% # get latest pick per player x event
+  #     group_by(player_name) %>%
+  #     slice_min(order_by = order, n = 1, with_ties = FALSE) %>% # then get next un-played tournament
+  #     ungroup() %>%
+  #     select(event_name, player_name, golfer1, golfer2) %>%
+  #     pivot_longer(cols = c("golfer1", "golfer2"),
+  #                  values_to = "golfer") %>%
+  #     select(event_name, player_name, golfer) %>%
+  #     # temporary naming fix for the masters
+  #     mutate(event_name = if_else(event_name == "The Masters", "Masters Tournament", event_name)) %>%
+  #     left_join(live_scores(), by = c("event_name", "golfer")) 
+  # 
+  #   # Clean the positions column
+  #   live_predicted_earnings$adjusted_position <- gsub("T", "", live_predicted_earnings$position)  # Remove "T" from tied positions
+  #   live_predicted_earnings$adjusted_position <- as.numeric(live_predicted_earnings$adjusted_position)     # Convert to numeric
+  # 
+  #   # retain predicive power of tied places
+  #   # Adjust positions for ties
+  #   live_predicted_earnings <- live_predicted_earnings %>%
+  #     group_by(position) %>%
+  #     mutate(adjusted_position = ifelse(n() > 1, mean(adjusted_position + 0:(n() - 1)), adjusted_position)) %>%
+  #     ungroup() %>%
+  #     select(event_name, player_name, position, adjusted_position)
+  # 
+  # 
+  #   # Use the random forest model to predict earnings on live data
+  #   predicted_earnings <- predict(earnings_pred_model, live_predicted_earnings) 
+  #   
+  # 
+  #   live_predicted_earnings %>%
+  #     mutate(predicted_earnings = if_else(adjusted_position > 65, 0, predicted_earnings)) %>%
+  #     select(player_name, position, predicted_earnings) %>%
+  #     group_by(player_name) %>%
+  #     summarise(predicted_earnings = sum(predicted_earnings, na.rm = T)) %>%
+  #     arrange(desc(predicted_earnings)) %>%
+  #     hchart("bar", hcaes(x = player_name, y = predicted_earnings, color = player_name)) %>%
+  #     hc_title(text = "Live Predicted Earnings") %>%
+  #     hc_yAxis(title = list(text = "Total Predicted Earnings")) %>%
+  #     hc_tooltip(
+  #       pointFormat = "<b>{point.player_name}</b><br>predicted_earnings: ${point.y:,.0f}"
+  #     ) 
+  #     
+  # })
+  # 
 
 
   # Render tables for each player's picks
@@ -814,6 +831,15 @@ server <- function(input, output, session) {
       select(event_name, golfer1, golfer2)
   }, colnames = FALSE)
   
+  output$john_picks_table <- renderTable({
+    data() %>%
+      filter(!event_occured & player_name == "John") %>%
+      group_by(event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      select(event_name, golfer1, golfer2)
+  }, colnames = FALSE)
+  
   output$eddie_picks_table <- renderTable({
     data() %>%
       filter(!event_occured & player_name == "Eddie") %>%
@@ -843,10 +869,10 @@ server <- function(input, output, session) {
     odds <- get_odds()$event_odds_table
     
     new_entry <- new_entry %>%
-      left_join(odds, by = c("golfer1" = "player_name")) %>%
+      left_join(odds, by = c("golfer1" = "player_name", "event_name")) %>%
       mutate(odds_g1 = odds) %>%
       select(-odds) %>%
-      left_join(odds, by = c("golfer2" = "player_name")) %>%
+      left_join(odds, by = c("golfer2" = "player_name", "event_name")) %>%
       mutate(odds_g2 = odds) %>%
       select(-odds)
 
@@ -977,7 +1003,7 @@ server <- function(input, output, session) {
                data(read_sheet(sheet_url, sheet = "2026")) 
                
                #simulate final scraped progress bar
-               showNotification("Scraping complete!...For any technical support please contact Rajeesh Masala Peshwari Naan Prescott",
+               showNotification("Complete!",
                                 type = "message", 
                                 duration = 10)
                }

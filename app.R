@@ -46,8 +46,6 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th
 # jsonstring <- gsub('"', '\\"', jsonstring)
 # cat(jsonstring)
 
-test <- read_sheet(sheet_url, sheet = "2026")
-
 #############
 # get list of future events
 #############
@@ -91,8 +89,7 @@ ui <- dashboardPage(
       menuItem("Live Leaderboard", tabName = "leaderboard", icon = icon("chart-line")),
       menuItem("Dashboard", tabName = "main", icon = icon("dashboard")),
       menuItem("Feeling lucky?", tabName = "coin", icon = icon("dice")),
-      menuItem("Game Rules", tabName = "game_rules", icon = icon("info-circle")),
-      menuItem("Admin", tabName = "admin", icon = icon("wrench"))
+      menuItem("Game Rules", tabName = "game_rules", icon = icon("info-circle"))
     )
   ),
   
@@ -314,44 +311,13 @@ ui <- dashboardPage(
           tags$li("Prizes TBD"),
           tags$li("After an official review into alleged abuse of the coin toss feature, it has been decided for the 2026 season that each player will be limited to 5 coin flips"),
           tags$li("These 5 coin flips may be used at any stage throughout the season. Per usual, only the first flip is recorded."),
-          tags$li("Coin toss function will be disabled for the FedEx Play-Off events (i.e. the last three events)"),
+          tags$li("Coin toss will be disabled for the FedEx Play-Off events (i.e. the last three events)"),
           h3(""),
-          h3("🏌️Tour Championship Draft"),
-          tags$li("The final event of the year is the Tour Championship at East Lake CC, with the field made up of the top 30 players in the FedEx cup standings"),
-          tags$li("A draft will determine each competitors two chosen golfers for this event. Previously picked golfers do not matter - you may choose freely. This will commence in the Whatsapp group from the Monday of the event"),
-          tags$li("Draft order is based on overall standings entering the week"),
-          tags$ul(
-            tags$li("Last place picks 1st"),
-            tags$li("6th place picks 2nd"),
-            tags$li("5th place picks 3rd"),
-            tags$li("4th place picks 4t"),
-            tags$li("3rd place picks 5th"),
-            tags$li("2nd place picks 6th"),
-            tags$li("1st place picks 7th"),
-            tags$li("last place place picks 8th"),
-            tags$li("6th place picks 9th"),
-            tags$li("5th place picks 10th"),
-            tags$li("4th place picks 11th"),
-            tags$li("3rd place picks 12th"),
-            tags$li("2nd place picks 13th"),
-            tags$li("1st place picks 14th")
-            ),
           h2("Sponsors:"),
           tags$img(src = "baboost.jfif", width = "50%", height = "auto"),
           tags$img(src = "pif.png",  width = "50%", height = "auto"),
           tags$img(src = "pga.png",  width = "50%", height = "auto")
         )
-      ),
-      
-      #################
-      # Admin Tab
-      #################
-      tabItem(
-        tabName = "admin",
-        actionButton("update_data", "Update Prize Money"),
-        h5("Press this to get latest tournament prize money from the web..."),
-        h5("ESPN.com usually has results and prize money from a Sunday finish by Monday afternoon"),
-        progressBar(id = "progress", value = 0, total = 100, display_pct = TRUE)
       )
     )
   )
@@ -636,102 +602,6 @@ server <- function(input, output, session) {
     
     }) 
   
-  observeEvent(input$update_data, 
-               {
-               
-               showNotification("Scraping PGA earnings data...Please wait!", type = "message", duration = 25)
-                 
-                 # start progress bar
-                 updateProgressBar(session, id = "progress", value = 0)
-                 
-                    for (i in seq(1, 100, by = 10)){
-                      Sys.sleep(5)
-                      
-                      updateProgressBar(session, id = "progress", value = i)
-                    }
-                 
-               # Get earnings data
-               # loop the web scraping function over all golfers selected for this week
-               all_golfers_selected <- data() %>%
-                 filter(!scraped) %>% # only scrape player data for records that have dont have any earnings figures yet
-                 select(golfer1, golfer2) %>%
-                 pivot_longer(cols = c("golfer1", "golfer2")) %>%
-                 unique() %>%
-                 pull()
-               
-               # get specific url for golfer
-               earnings_list <- list() 
-               for(g in all_golfers_selected){
-                 print(g)
-                 result <- scrape_pga_prize_money(g)
-                 earnings_list[[g]] <- result
-               }
-               earnings <- do.call(rbind, earnings_list) 
-                 
-      
-               # Update earnings
-               already_scraped <- data() %>%
-                 filter(scraped) %>%
-                 group_by(player_name, event_name) %>%
-                 slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
-                 ungroup() %>%
-                 select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss, scraped, odds_g1, odds_g2)
-               
-               
-               df_new <- data()  %>%
-                 filter(!scraped) %>%
-                 mutate(event_name = case_when(
-                   event_name == "The Masters" ~ "Masters Tournament", 
-                   .default = event_name)) %>%
-                 left_join(earnings, by = c("event_name", "golfer1" = "golfer_name", "coin_toss")) %>%
-                 # if coin was tossed, preserve existing earnings
-                 mutate(earnings_g1 = if_else(coin_toss == TRUE, earnings_g1, earnings)) %>% 
-                 select(-earnings) %>%
-                 left_join(earnings, by = c("event_name", "golfer2" = "golfer_name", "coin_toss")) %>%
-                 # if coin was tossed, preserve existing earnings
-                 mutate(earnings_g2 = if_else(coin_toss == TRUE, earnings_g2, earnings)) %>% 
-                 select(-earnings) %>%
-                 # update event_corrected flag if current date is >= 5 days after event deadline
-                 left_join(read.csv("data/events.csv"), by = "event_name") %>%
-                 mutate(event_occured = if_else(as.POSIXct(Sys.time()) >= as.Date(deadline, format = "%d/%m/%Y/%H:%M")  + 4, TRUE, FALSE)) %>% 
-                 # update scraped flag if earnings were successfully scraped
-                 mutate(scraped = if_else(is.na(earnings_g1) & is.na(earnings_g2), FALSE, TRUE)) %>%
-                 replace_na(list(earnings_g1 = 0, earnings_g2 = 0)) %>%
-                 group_by(player_name, event_name) %>%
-                 slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
-                 ungroup() %>%
-                 select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss, scraped, odds_g1, odds_g2)
-               
-               # double earnings if odds >= 100/1
-               df_new <- df_new %>%
-                 mutate(
-                   prob_g1 = {
-                     x <- strsplit(odds_g1, "/")
-                     as.numeric(sapply(x, `[`, 1)) / as.numeric(sapply(x, `[`, 2))
-                   },
-                   prob_g2 = {
-                     x <- strsplit(odds_g1, "/")
-                     as.numeric(sapply(x, `[`, 1)) / as.numeric(sapply(x, `[`, 2))
-                   }
-                 ) %>%
-                 mutate(
-                   earnings_g1 = if_else(prob_g1 >= 100, earnings_g1 * 2, earnings_g1),
-                   earnings_g2 = if_else(prob_g2 >= 100, earnings_g2 * 2, earnings_g2)
-                 ) %>%
-                 select(-prob_g1, -prob_g2)
-                   
-               
-               # Save updated data
-               df <- bind_rows(already_scraped, df_new)
-               update_google_sheet(df)
-               data(read_sheet(sheet_url, sheet = "2026")) 
-               
-               #simulate final scraped progress bar
-               showNotification("Complete!",
-                                type = "message", 
-                                duration = 10)
-               }
-               ) 
   ####
   # Leaderboard 
   ####

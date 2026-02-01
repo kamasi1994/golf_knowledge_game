@@ -87,7 +87,7 @@ ui <- dashboardPage(
     sidebarMenu(
       menuItem("Enter Picks", tabName = "picks", icon = icon("user"), selected = TRUE),
       menuItem("Live Leaderboard", tabName = "leaderboard", icon = icon("chart-line")),
-      menuItem("Dashboard", tabName = "main", icon = icon("dashboard")),
+      menuItem("Standings", tabName = "main", icon = icon("dashboard")),
       menuItem("Feeling lucky?", tabName = "coin", icon = icon("dice")),
       menuItem("Game Rules", tabName = "game_rules", icon = icon("info-circle"))
     )

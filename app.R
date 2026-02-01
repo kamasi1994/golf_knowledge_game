@@ -940,6 +940,12 @@ server <- function(input, output, session) {
       return()
     }
     
+    # control for when no allowable event exists
+    if(length(latest_event_played()) == 0){
+      showNotification("The window to flip for the most recent event is 4 days. You are too late", type = "error")
+      return()
+    }
+    
     # Simulate a coin flip (randomly choose heads or tails)
     result <- sample(c("Heads", "Tails"), 1)
     
@@ -956,10 +962,16 @@ server <- function(input, output, session) {
       filter(player_name == input$coin_user_name & event_name == latest_event_played() & coin_toss == FALSE) %>%
       count() %>%
       pull() > 0
-      
+    
+    # does the player have at least 1 coin to toss? (each player given 4 attempts/coins at start of season)
+    coins_available <- read_sheet(sheet_url, sheet = "coins") %>%
+      filter(name == input$coin_user_name) %>%
+      pull(coins)
+
+    
     # Only proceed if a record exists
-    if (!record_exist) {
-      showNotification("No valid record found for the coin toss.", type = "warning")
+    if (!(record_exist & coins_available >=1)) {
+      showNotification("No flips left (degenerate)", type = "warning")
       return()
     }
     
@@ -1001,6 +1013,13 @@ server <- function(input, output, session) {
      
      # update data for charts
      data(read_sheet(sheet_url, sheet = "2026")) 
+    }
+    
+    # update coins register
+    if(record_exist & coins_available >=1){
+      read_sheet(sheet_url, sheet = "coins") %>%
+        mutate(coins = if_else(name == input$coin_user_name, coins - 1, coins)) %>%
+        write_sheet(sheet_url, sheet = "coins")
     }
     
   })

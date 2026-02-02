@@ -793,7 +793,7 @@ server <- function(input, output, session) {
   # get latest played event
   latest_event_played <- reactiveVal(
     read.csv("data/events.csv") %>%
-      filter(as.Date(deadline, format = "%d/%m/%Y/%H:%M")  + 4 < Sys.time()) %>%
+      filter(as.Date(deadline, format = "%d/%m/%Y/%H:%M") + 4 < as.POSIXct(Sys.time())) %>%
       slice_max(order_by = order) %>%
       pull(event_name)
   )
@@ -812,7 +812,7 @@ server <- function(input, output, session) {
     
     # control for when no allowable event exists
     if(length(latest_event_played()) == 0){
-      showNotification("The window to flip for the most recent event is 4 days. You are too late", type = "error")
+      showNotification("You can only flip after a tournament finishes and before the next one starts", type = "error")
       return()
     }
     

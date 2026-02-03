@@ -123,7 +123,7 @@ scrape_pga_prize_money <- function(golfer_name) {
 # Functions to update Google Sheet 
 #############
 update_google_sheet <- function(new_data) { 
-  sheet_write(new_data, ss = sheet_url, sheet = "2026") } 
+  sheet_write(new_data, ss = "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th9HNBumQSD13BhIXlI/edit?pli=1&gid=0#gid=0" , sheet = "2026") } 
 
 append_google_sheet <- function(new_data) { 
-  sheet_append(new_data, ss = sheet_url, sheet = "2026") } 
+  sheet_append(new_data, ss = "https://docs.google.com/spreadsheets/d/1rdaKGprdxuOKntnZYZrcsvU6Th9HNBumQSD13BhIXlI/edit?pli=1&gid=0#gid=0" , sheet = "2026") } 

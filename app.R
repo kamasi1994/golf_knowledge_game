@@ -762,8 +762,8 @@ server <- function(input, output, session) {
         type = "sankey",
         name = "Player to Golfer Connections"
       ) %>%
-      hc_title(text = "Big Dog Golfers (DataGolf.com top 5 players)") %>%
-      hc_subtitle(text = "Who still has these golfers in their arsenal?") %>%
+      hc_title(text = "Top Golfers Available") %>%
+      hc_subtitle(text = "DataGolf.com top 5") %>%
       hc_plotOptions(
         sankey = list(
           dataLabels = list(
@@ -790,14 +790,27 @@ server <- function(input, output, session) {
   # Reactive value to store the coin flip result
   coin_result <- reactiveVal(NULL)
   
-  # get latest played event
-  latest_event_played <- reactiveVal(
-    read.csv("data/events.csv") %>%
-      filter(as.Date(deadline, format = "%d/%m/%Y/%H:%M") + 4 < as.POSIXct(Sys.time())) %>%
-      slice_max(order_by = order) %>%
-      pull(event_name)
-  )
-  
+  # determine whether there is an eligible event to flip
+  # users can only flip from the Monday after an event ends until the next one starts
+  eligible_event_to_flip <- {
+    events <- read.csv("data/events.csv") %>%
+      arrange(order) %>%
+      mutate(
+        deadline = as.POSIXct(deadline, format = "%d/%m/%Y/%H:%M"),
+        coin_open_time = deadline + 4 * 24 * 60 * 60,
+        next_event_start = lead(deadline))
+
+        now <- Sys.time()
+
+        events %>%
+          filter(
+            coin_open_time <= now,
+            is.na(next_event_start) | now < next_event_start
+          ) %>%
+          slice_tail(n = 1) %>%
+          pull(event_name)
+  }
+
   # Observe the button click
   observeEvent(input$flip_coin, {
     # Validate inputs
@@ -811,87 +824,90 @@ server <- function(input, output, session) {
     }
     
     # control for when no allowable event exists
-    if(length(latest_event_played()) == 0){
+    if(length(eligible_event_to_flip) == 0){
       showNotification("You can only flip after a tournament finishes and before the next one starts", type = "error")
       return()
     }
     
-    # Simulate a coin flip (randomly choose heads or tails)
-    result <- sample(c("Heads", "Tails"), 1)
-    
-    # Update the reactive value
-    coin_result(result)
-    
-    
-    # update earnings for most recent event
-    user_won <- input$user_choice == result
-    
-    # does a record exist that allows the user to toss coin
+    # does a record exist that allows the user to toss coin?
     # Specifically, have they tossed the coin on most recently played event?
-    record_exist <- data() %>% 
-      filter(player_name == input$coin_user_name & event_name == latest_event_played() & coin_toss == FALSE) %>%
-      count() %>%
-      pull() > 0
+    record_exist <- data() %>%
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      filter(
+        player_name == input$coin_user_name,
+        event_name == eligible_event_to_flip,
+        coin_toss == FALSE
+      ) %>%
+      nrow() > 0
     
-    # does the player have at least 1 coin to toss? (each player given 4 attempts/coins at start of season)
+    # does the player have at least 1 coin to toss? (each player given 5 attempts/coins at start of season)
     coins_available <- read_sheet(sheet_url, sheet = "coins") %>%
       filter(name == input$coin_user_name) %>%
       pull(coins)
-
     
-    # Only proceed if a record exists
-    if (!(record_exist & coins_available >=1)) {
-      showNotification("No flips left (degenerate)", type = "warning")
+    
+    # Only proceed if a record exists and user has at least 1 coin
+    if (!(record_exist && coins_available >=1)) {
+      showNotification("Not available", type = "warning")
       return()
-    }
-    
-    # update earnings depending on outcome of coin toss
-     if(user_won){
+    } else {
+      
+      # Simulate a coin flip (randomly choose heads or tails)
+      result <- sample(c("Heads", "Tails"), 1)
+      
+      # Update the reactive value
+      coin_result(result)
+      
+      # update earnings for most recent event (TRUE or FALSE)
+      user_won <- input$user_choice == result
+      
+      # update earnings depending on outcome of coin toss
+       if(user_won){
+         df_new <- data() %>%
+           left_join(read.csv("data/events.csv"), by = "event_name") %>%
+           group_by(player_name, event_name) %>%
+           slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+           filter(player_name == input$coin_user_name & event_name == eligible_event_to_flip & coin_toss == FALSE) %>%
+           mutate(earnings_g1 = earnings_g1 * 2, # double the earnings
+                  earnings_g2 = earnings_g2 * 2,
+                  coin_toss = TRUE, # update coin toss col
+                  input_date = as.POSIXct(Sys.time())) %>%
+           select(-order, -deadline)
+           
+           # add new record to table
+           append_google_sheet(df_new)
+           
+           # update data for charts
+           data(read_sheet(sheet_url, sheet = "2026")) 
+       } 
+      
+      else {
+         
        df_new <- data() %>%
          left_join(read.csv("data/events.csv"), by = "event_name") %>%
          group_by(player_name, event_name) %>%
          slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
-         filter(player_name == input$coin_user_name & event_name == latest_event_played() & coin_toss == FALSE) %>%
-         mutate(earnings_g1 = earnings_g1 * 2, # double the earnings
-                earnings_g2 = earnings_g2 * 2,
-                coin_toss = TRUE, # update coin toss col
-                input_date = as.POSIXct(Sys.time())) %>%
-         select(-order, -deadline)
-         
-         # add new record to table
-         append_google_sheet(df_new)
-         
-         # update data for charts
-         data(read_sheet(sheet_url, sheet = "2026")) 
-     } 
-    
-    else {
+         filter(player_name == input$coin_user_name & event_name == eligible_event_to_flip & coin_toss == FALSE) %>%
+         mutate(earnings_g1 = 0, # set earnings to €0
+              earnings_g2 = 0,
+              coin_toss = TRUE, # update coin toss col
+              input_date = as.POSIXct(Sys.time())) %>%
+         select(-order, - deadline)
        
-     df_new <- data() %>%
-       left_join(read.csv("data/events.csv"), by = "event_name") %>%
-       group_by(player_name, event_name) %>%
-       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
-       filter(player_name == input$coin_user_name & event_name == latest_event_played() & coin_toss == FALSE) %>%
-       mutate(earnings_g1 = 0, # set earnings to €0
-            earnings_g2 = 0,
-            coin_toss = TRUE, # update coin toss col
-            input_date = as.POSIXct(Sys.time())) %>%
-       select(-order, - deadline)
-     
-     # add new record to table
-     append_google_sheet(df_new)
-     
-     # update data for charts
-     data(read_sheet(sheet_url, sheet = "2026")) 
-    }
-    
-    # update coins register
-    if(record_exist & coins_available >=1){
+       # add new record to table
+       append_google_sheet(df_new)
+       
+       # update data for charts
+       data(read_sheet(sheet_url, sheet = "2026")) 
+      }
+      
+      # update coins register
       read_sheet(sheet_url, sheet = "coins") %>%
-        mutate(coins = if_else(name == input$coin_user_name, coins - 1, coins)) %>%
-        write_sheet(sheet_url, sheet = "coins")
+          mutate(coins = if_else(name == input$coin_user_name, coins - 1, coins)) %>%
+          write_sheet(sheet_url, sheet = "coins")
     }
-    
   })
   
   # Render the coin animation
@@ -917,10 +933,10 @@ server <- function(input, output, session) {
         tags$p(paste("The coin landed on:", coin_result())),
         tags$p(if (user_won) {
           tags$span("Congrats, you won! 🎉", style = "color: green;")
-          tags$span(paste("Your earnings for the ", latest_event_played(), "have been doubled 🤑"), style = "color: green;")
+          tags$span(paste("Your earnings for the ", eligible_event_to_flip, "have been doubled 🤑"), style = "color: green;")
         } else {
           tags$span("You lost. 😢", style = "color: red;")
-          tags$span(paste("Your earnings for the", latest_event_played(), "have been set to €0 👿"), style = "color: red;")
+          tags$span(paste("Your earnings for the", eligible_event_to_flip, "have been set to €0 👿"), style = "color: red;")
         })
       )
     }

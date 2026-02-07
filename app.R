@@ -416,6 +416,8 @@ server <- function(input, output, session) {
   
   output$leaderboard <- renderDT({
     
+    req(nrow(data()) > 0)
+    
     if(is.null(live_scores())){
       datatable(data.frame(
         Name = NA,
@@ -606,6 +608,9 @@ server <- function(input, output, session) {
   # Leaderboard 
   ####
   output$leaderboard_plot <- renderHighchart({ 
+    
+    req(nrow(data()) > 0)
+    
     df <- data() %>% 
       # only use latest pick per player / tournament
       group_by(player_name, event_name) %>%
@@ -630,6 +635,9 @@ server <- function(input, output, session) {
   # Time series plot 
   ####
   output$time_series_plot <- renderHighchart({ 
+    
+    req(nrow(data()) > 0)
+    
     df <-data() %>%
       # only use latest pick per player / tournament
       group_by(player_name, event_name) %>%
@@ -657,68 +665,73 @@ server <- function(input, output, session) {
   # cumulative earnings time series plot
   ####
   output$cumulative_plot <- renderHighchart({
-  df <- data() %>%
-    # only use latest pick per player / tournament
-    group_by(player_name, event_name) %>%
-    slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
-    # only show data for events that have occurred
-    filter(event_occured) %>% 
-    left_join(read.csv("data/events.csv"), by = "event_name") %>%
-    group_by(order, event_name, player_name) %>% 
-    summarise(TotalEarnings = sum(earnings_g1 +earnings_g2, na.rm = TRUE)) %>%
-    group_by(player_name) %>%
-    arrange(order) %>%
-    mutate(TotalEarnings = cumsum(TotalEarnings)) %>%
-    ungroup() %>%
-    arrange(order) %>%
-    mutate(event_name = factor(event_name, levels = unique(event_name[order(order)])))
     
-    hchart(df, "line", 
-           hcaes(x = event_name, y = TotalEarnings, group = player_name)) %>%
-      hc_title(text = "Cumulative Earnings") %>%
-      hc_xAxis(title = list(text = "Tournament"), 
-               categories = levels(df$event_name)) %>%
-      hc_yAxis(title = list(text = "Total Earnings")) %>%
-      hc_plotOptions(line = list(marker = list(enabled = TRUE))) %>%
-      hc_tooltip(shared = TRUE, valueSuffix = " $")
+    req(nrow(data()) > 0)
+    
+    df <- data() %>%
+      # only use latest pick per player / tournament
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      # only show data for events that have occurred
+      filter(event_occured) %>% 
+      left_join(read.csv("data/events.csv"), by = "event_name") %>%
+      group_by(order, event_name, player_name) %>% 
+      summarise(TotalEarnings = sum(earnings_g1 +earnings_g2, na.rm = TRUE)) %>%
+      group_by(player_name) %>%
+      arrange(order) %>%
+      mutate(TotalEarnings = cumsum(TotalEarnings)) %>%
+      ungroup() %>%
+      arrange(order) %>%
+      mutate(event_name = factor(event_name, levels = unique(event_name[order(order)])))
+      
+      hchart(df, "line", 
+             hcaes(x = event_name, y = TotalEarnings, group = player_name)) %>%
+        hc_title(text = "Cumulative Earnings") %>%
+        hc_xAxis(title = list(text = "Tournament"), 
+                 categories = levels(df$event_name)) %>%
+        hc_yAxis(title = list(text = "Total Earnings")) %>%
+        hc_plotOptions(line = list(marker = list(enabled = TRUE))) %>%
+        hc_tooltip(shared = TRUE, valueSuffix = " $")
     })
   
   ####
   # TOP 25 picked players
   ####
-  output$top_25_plot <- renderHighchart({
+  output$top_25_plot <- renderHighchart({#
     
-  top_25 <- data.frame(read.csv("data/dg_rankings_jan2026.csv")) %>%
-    mutate(rank = row_number()) %>%
-    slice_min(order_by = rank, n = 25)
-  
-  
-  df <- data() %>%
-    # only look at events that have been played
-    filter(event_occured) %>%
-    # only use latest pick per player / tournament
-    group_by(player_name, event_name) %>%
-    slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
-    ungroup() %>%
-    select(player_name, golfer1, golfer2) %>%
-    pivot_longer(
-      cols = starts_with("golfer"),
-      names_to = "picks") %>%
-    select(player_name, value) %>%
-    inner_join(top_25, by = c("value" = "name")) %>%
-    group_by(player_name) %>%
-    summarise(nbr_top_25 = n()) %>%
-    arrange(desc(nbr_top_25))
-  
-  
-  
-  hchart(df, "bar", hcaes(x = player_name, y = nbr_top_25, color = player_name)) %>%
-    hc_chart(inverted = TRUE) %>%  # Make the chart horizontal
-    hc_xAxis(title = list(text = "Player Name")) %>%
-    hc_yAxis(title = list(text = "Count")) %>%
-    hc_title(text = "Number of Top 25 ranked golfers picked") %>%
-    hc_caption(text = "Footnote: Data Golf rankings January 2026", style = list(fontSize = "10px", color = "#777777"))
-  
+    req(nrow(data()) > 0)
+    
+    top_25 <- data.frame(read.csv("data/dg_rankings_jan2026.csv")) %>%
+      mutate(rank = row_number()) %>%
+      slice_min(order_by = rank, n = 25)
+    
+    
+    df <- data() %>%
+      # only look at events that have been played
+      filter(event_occured) %>%
+      # only use latest pick per player / tournament
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      select(player_name, golfer1, golfer2) %>%
+      pivot_longer(
+        cols = starts_with("golfer"),
+        names_to = "picks") %>%
+      select(player_name, value) %>%
+      inner_join(top_25, by = c("value" = "name")) %>%
+      group_by(player_name) %>%
+      summarise(nbr_top_25 = n()) %>%
+      arrange(desc(nbr_top_25))
+    
+    
+    
+    hchart(df, "bar", hcaes(x = player_name, y = nbr_top_25, color = player_name)) %>%
+      hc_chart(inverted = TRUE) %>%  # Make the chart horizontal
+      hc_xAxis(title = list(text = "Player Name")) %>%
+      hc_yAxis(title = list(text = "Count")) %>%
+      hc_title(text = "Number of Top 25 ranked golfers picked") %>%
+      hc_caption(text = "Footnote: Data Golf rankings January 2026", style = list(fontSize = "10px", color = "#777777"))
+    
   })  
   
   ####
@@ -726,6 +739,8 @@ server <- function(input, output, session) {
   ####
   
   output$big_dog_sankey <- renderHighchart({
+    
+    req(nrow(data()) > 0)
     
     big_dogs <- c("Rory McIlroy", "Scottie Scheffler", "Jon Rahm", "Tommy Fleetwood")
     

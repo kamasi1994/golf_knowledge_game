@@ -88,7 +88,7 @@ update_golf_data <- function(){
           as.numeric(sapply(x, `[`, 1)) / as.numeric(sapply(x, `[`, 2))
         },
         prob_g2 = {
-          x <- strsplit(odds_g1, "/")
+          x <- strsplit(odds_g2, "/")
           as.numeric(sapply(x, `[`, 1)) / as.numeric(sapply(x, `[`, 2))
         }
       ) %>%

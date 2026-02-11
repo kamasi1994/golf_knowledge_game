@@ -11,7 +11,8 @@ get_odds <- function(){
   
   event_odds_name <- odds %>%
     html_element(".Headline-orange") %>%
-    html_text()
+    html_text(trim = TRUE) %>%
+    str_squish()
   
   event_odds_table <- odds %>%
     html_element(".Copy-black") %>%

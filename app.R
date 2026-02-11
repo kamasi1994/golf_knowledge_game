@@ -194,6 +194,12 @@ ui <- dashboardPage(
             title = "",
             status = "primary",
             solidHeader = TRUE,
+            DTOutput("selections_next_event")
+          ),
+          box(
+            title = "",
+            status = "primary",
+            solidHeader = TRUE,
             highchartOutput("leaderboard_plot")
           ),
           box(
@@ -603,6 +609,34 @@ server <- function(input, output, session) {
     data(read_sheet(sheet_url, sheet = "2026"))
     
     }) 
+  
+  ####
+  # Picks for next event
+  ####
+  output$selections_next_event <- renderDataTable({
+    
+    data() %>%
+      filter(!event_occured) %>%
+      left_join(read.csv("data/events.csv"), by = "event_name") %>%
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>% # get latest pick per player x event
+      group_by(player_name) %>%
+      slice_min(order_by = order, n = 1, with_ties = FALSE) %>% # then get next un-played tournament
+      ungroup() %>%
+      select(player_name, golfer1, golfer2) %>%
+      datatable(caption = htmltools::tags$caption(
+        style = "caption-side: top; text-align: center; font-size: 24px; font-weight: bold;",
+        "Selections for next event"
+      ),
+      escape = FALSE, 
+      rownames = FALSE, 
+      colnames = c("Name", "Golfer 1", "Golfer 2"), 
+      options = list(
+        searching = FALSE, 
+        paging = FALSE, 
+        ordering = FALSE)
+      )
+  })
   
   ####
   # Leaderboard 

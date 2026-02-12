@@ -528,11 +528,11 @@ server <- function(input, output, session) {
   id_date_valid <- reactive({
     
     current_event_deadline <- read.csv("data/events.csv") %>%
-      filter(as.POSIXct(Sys.time()) <= as.Date(deadline, format = "%d/%m/%Y/%H:%M")) %>%
+      filter(Sys.time() <= as.POSIXct(deadline, format = "%d/%m/%Y/%H:%M")) %>%
       first() %>%
       pull(deadline)
     
-    as.POSIXct(Sys.time()) >= as.Date(current_event_deadline, format = "%d/%m/%Y/%H:%M") - 3 
+    Sys.time() >= as.POSIXct(current_event_deadline, format = "%d/%m/%Y/%H:%M") - as.difftime(3, units = "days")
   })
   
   output$submit_button <- renderUI({
@@ -550,7 +550,7 @@ server <- function(input, output, session) {
     
     # current event is the next event in the list at a given time
     current_event <- read.csv("data/events.csv") %>%
-      filter(as.POSIXct(Sys.time()) <= as.Date(deadline, format = "%d/%m/%Y/%H:%M")) %>%
+      filter(Sys.time() <= as.POSIXct(deadline, format = "%d/%m/%Y/%H:%M")) %>%
       first() %>%
       pull(event_name)
     
@@ -596,7 +596,7 @@ server <- function(input, output, session) {
       
       tags$p(if (already_picked) {
         tags$span("")
-        tags$span("Warning! You've already picked one of these players. Either choose another player for this tournament or update your selection for a different tournament", style = "color: red;")
+        tags$span("Warning! You may have already picked one of these players", style = "color: yellow;")
       } else {
         tags$span("Success", style = "color: green;")
       })

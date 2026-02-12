@@ -132,7 +132,7 @@ ui <- dashboardPage(
       tabItem(
         tabName = "picks",
         h1(textOutput("current_event"), style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),
-        selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris", "Phil", "Eddie", "Jive", "Mark", "Ross", "John")),
+        selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris", "Phil", "Eddie", "Jive", "Mark", "Ross", "John", "Jack")),
         selectizeInput(inputId = "golfer1",
                        label = "Golfer 1", 
                        selected = NULL,
@@ -287,7 +287,7 @@ ui <- dashboardPage(
       "))),
         
         # Input for user name
-        selectInput("coin_user_name", "Enter Your Name", choices = c("Jive", "Conor", "Shane", "Sean", "Chris", "Phil", "Eddie", "Ross", "Mark", "John")),
+        selectInput("coin_user_name", "Enter Your Name", choices = c("Jive", "Conor", "Shane", "Sean", "Chris", "Phil", "Eddie", "Ross", "Mark", "John", "Jack")),
         
         # Radio buttons for user to choose Heads or Tails
         radioButtons("user_choice", "Choose Heads or Tails:",
@@ -538,10 +538,10 @@ server <- function(input, output, session) {
   
   output$submit_button <- renderUI({
     if (id_date_valid()){
-      actionButton("submit", "Submit Picks")
+      actionButton("submit", "Submit Picks", class = "btn-primary btn-lg")
     } else {
       tagList(
-        actionButton("submit", "Submit", disabled = TRUE),
+        actionButton("submit", "Submit", class = "btn-primary btn-lg", disabled = TRUE),
         div(class = "text-danger", "Submissions for the next tournament open on the Monday of tournament week")
       )
     }

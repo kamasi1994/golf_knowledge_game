@@ -382,7 +382,7 @@ server <- function(input, output, session) {
     
     # current event is the next event in the list at a given time
     current_event <- read.csv("data/events.csv") %>%
-      filter(as.POSIXct(Sys.time()) <= as.Date(deadline, format = "%d/%m/%Y/%H:%M")) %>%
+      filter(Sys.time() <= as.POSIXct(deadline, format = "%d/%m/%Y/%H:%M")) %>%
       first() %>%
       pull(event_name)
     
@@ -532,7 +532,8 @@ server <- function(input, output, session) {
       first() %>%
       pull(deadline)
     
-    Sys.time() >= as.POSIXct(current_event_deadline, format = "%d/%m/%Y/%H:%M") - as.difftime(3, units = "days")
+    Sys.time() >= as.POSIXct(current_event_deadline, format = "%d/%m/%Y/%H:%M") - as.difftime(3, units = "days") &
+      Sys.time() <= as.POSIXct(current_event_deadline, format = "%d/%m/%Y/%H:%M") 
   })
   
   output$submit_button <- renderUI({

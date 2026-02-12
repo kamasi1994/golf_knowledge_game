@@ -538,10 +538,10 @@ server <- function(input, output, session) {
   
   output$submit_button <- renderUI({
     if (id_date_valid()){
-      actionButton("submit", "Submit Picks", class = "btn-primary btn-lg")
+      actionButton("submit", "Submit Picks", class = "btn btn-lg")
     } else {
       tagList(
-        actionButton("submit", "Submit", class = "btn-primary btn-lg", disabled = TRUE),
+        actionButton("submit", "Submit", class = "btn btn-lg", disabled = TRUE),
         div(class = "text-danger", "Submissions for the next tournament open on the Monday of tournament week")
       )
     }

@@ -341,7 +341,8 @@ server <- function(input, output, session) {
   scam_images <- c(
     "worm_bet.jfif",
     "rathmore_scam.jfif",
-    "turkey_dick.jfif"
+    "turkey_dick.jfif",
+    "shane_scam.jfif"
   )
   
   observe({

@@ -335,10 +335,22 @@ ui <- dashboardPage(
 #############################################################
 server <- function(input, output, session) {
   
+  #####################################
+  # scam popups
+  #####################################
+  scam_images <- c(
+    "worm_bet.jfif",
+    "rathmore_scam.jfif",
+  )
+  
   observe({
+    
+    # Randomly select one image
+    random_image <- sample(scam_images, 1)
+    
     showModal(modalDialog(
       tags$div(style = "margin: - 15px - 20px -20px -20px;",
-               tags$img(src = "worm_bet.jfif",
+               tags$img(src = random_image,
                         style = "width: 100%; height: auto; display: block;")
       ), size = "s", easyClose = TRUE
     ))

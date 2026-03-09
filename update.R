@@ -30,6 +30,7 @@ update_golf_data <- function(){
     filter(!scraped) %>% # only scrape player data for records that have dont have any earnings figures yet
     select(golfer1, golfer2) %>%
     pivot_longer(cols = c("golfer1", "golfer2")) %>%
+    filter(!is.na(value)) %>%
     unique() %>%
     pull()
   

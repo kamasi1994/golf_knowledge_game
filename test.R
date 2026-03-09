@@ -7,6 +7,7 @@ all_golfers_selected <- test %>%
   filter(!scraped) %>% # only scrape player data for records that have dont have any earnings figures yet
   select(golfer1, golfer2) %>%
   pivot_longer(cols = c("golfer1", "golfer2")) %>%
+  filter(!is.na(value)) %>%
   unique() %>%
   pull()
 
@@ -18,7 +19,7 @@ for(g in all_golfers_selected){
 }
 earnings <- do.call(rbind, earnings_list)
 
-scrape_pga_prize_money("Xander Schauffele")
+scrape_pga_prize_money("Nico Echavarria")
 
 ##################################### 
 # add missing odds
@@ -52,4 +53,11 @@ new_df <- bind_rows(not_missing_odds, missing_odds) %>%
 update_google_sheet(new_df)
 
 
+#################
 
+new_player_urls <- read.csv("data/player_urls.csv") %>%
+  mutate(
+    id = sub(".*?/id/(\\d+).*", "\\1", url),
+    new_url = paste0("https://www.espn.com/golf/player/results/_/id/", id, "/season/2026"))
+
+write.csv(new_player_urls, "data/new_player_urls.csv", row.names = F)

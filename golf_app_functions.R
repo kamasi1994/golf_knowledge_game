@@ -77,9 +77,9 @@ scrape_pga_prize_money <- function(golfer_name) {
   
   # find player name in player url file (player_urls.csv)
   # this has the espn.com urls for the top 300 players according to data golf (so includes liv players)
-  player_link <- read.csv("data/player_urls.csv") %>%
+  player_link <- read.csv("data/new_player_urls.csv") %>%
     filter(name == golfer_name) %>%
-    select(url) %>%
+    select(new_url) %>%
     pull()
   
   # read the player page on espn.com

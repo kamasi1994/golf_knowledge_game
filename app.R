@@ -132,6 +132,8 @@ ui <- dashboardPage(
       tabItem(
         tabName = "picks",
         h1(textOutput("current_event"), style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),
+        tags$img(src = "masters.jfif",
+                 style = "width: 100%; height: auto; display: block;"),
         selectInput("player_name", "Name", choices = c("Conor", "Shane", "Sean", "Chris", "Phil", "Eddie", "Jive", "Mark", "Ross", "John", "Jack")),
         selectizeInput(inputId = "golfer1",
                        label = "Golfer 1", 
@@ -340,9 +342,6 @@ server <- function(input, output, session) {
   #####################################
   scam_images <- c(
     "worm_bet.jfif",
-    "rathmore_scam.jfif",
-    "turkey_dick.jfif",
-    "shane_scam.jfif",
     "meet_heftys.jfif"
   )
   

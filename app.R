@@ -974,6 +974,9 @@ server <- function(input, output, session) {
       # update earnings for most recent event (TRUE or FALSE)
       user_won <- input$user_choice == result
       
+      # cat("Coin result:", result, "\n")
+      # cat("User choice:", input$user_choice, "\n")
+      
       # update earnings depending on outcome of coin toss
        if(user_won){
          df_new <- data() %>%

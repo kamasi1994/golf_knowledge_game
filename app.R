@@ -580,7 +580,9 @@ server <- function(input, output, session) {
     
     # add odds
     odds <- get_odds()$event_odds_table %>%
-      mutate(player_name = str_squish(player_name))
+      mutate(player_name = str_squish(player_name)) %>%
+      mutate(event_name = if_else(event_name == "the Memorial Tournament", "the Memorial Tournament pres. by Workday", event_name))
+    
     
     new_entry <- new_entry %>%
       mutate(
@@ -639,7 +641,8 @@ server <- function(input, output, session) {
           nrow() > 0)
     
     odds <- get_odds()$event_odds_table %>%
-      mutate(player_name = str_squish(player_name))
+      mutate(player_name = str_squish(player_name)) %>%
+      mutate(event_name = if_else(event_name == "the Memorial Tournament", "the Memorial Tournament pres. by Workday", event_name))
     
     data() %>%
       filter(!event_occured) %>%
@@ -802,7 +805,7 @@ server <- function(input, output, session) {
       slice_min(order_by = rank, n = 25)
     
     
-    df <- data() %>%
+    df <- test %>%
       # only look at events that have been played
       filter(event_occured) %>%
       # only use latest pick per player / tournament
@@ -814,7 +817,7 @@ server <- function(input, output, session) {
         cols = starts_with("golfer"),
         names_to = "picks") %>%
       select(player_name, value) %>%
-      inner_join(top_25, by = c("value" = "name")) %>%
+      inner_join(top_25, by = c("value" = "name")) %>% view()
       group_by(player_name) %>%
       summarise(nbr_top_25 = n()) %>%
       arrange(desc(nbr_top_25))

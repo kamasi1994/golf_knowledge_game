@@ -842,7 +842,7 @@ server <- function(input, output, session) {
       slice_min(order_by = rank, n = 25)
     
     
-    df <- test %>%
+    df <- data() %>%
       # only look at events that have been played
       filter(event_occured) %>%
       # only use latest pick per player / tournament

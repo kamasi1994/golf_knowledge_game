@@ -20,7 +20,7 @@ scrape_top_200_payer_ids()
 # get data golf rankings
 # first, manually download a csv file from the data golf website
 # Import
-dg <- read.csv("data/dg_rankings_jan2026.csv")
+dg <- read.csv("data/datagolf_rankings_current.csv")
 
 # create function to reformat names --> "Scheffler, Scottie" to "Scottie Scheffler
 reformat_name <- function(name){
@@ -36,6 +36,10 @@ reformat_name <- function(name){
 }
 
 dg$name <- sapply(dg$player_name, reformat_name)
+
+dg %>%
+  select(name, dg_rank) %>%
+  write.csv("data/dg_rankings_june2026.csv", row.names = F)
 
 dg_urls <- dg %>%
   select(name, dg_rank) %>%

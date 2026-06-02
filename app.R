@@ -122,7 +122,14 @@ ui <- dashboardPage(
         object-fit: cover; /* Ensures the image covers the circular area */
         margin: 5px;       /* Adds some spacing between images */
       }
-    "))
+    ")),
+      tags$style(HTML("
+                      .selectize-input {
+                      min-height: 60px;
+                      font-size: 18px;
+                      padding-top: 15px;
+                      }
+                      "))
     ),
     
     tabItems(
@@ -136,16 +143,18 @@ ui <- dashboardPage(
         selectizeInput(inputId = "golfer1",
                        label = "Golfer 1", 
                        selected = NULL,
-                       choices = read.csv("data/dg_rankings_jan2026.csv")$name,
+                       choices = read.csv("data/dg_rankings_june2026.csv")$name,
                        options = list(placeholder = 'Type to search...', maxOptions = 10)),
         selectizeInput(inputId = "golfer2",
                        label = "Golfer 2", 
                        selected = NULL,
-                       choices = read.csv("data/dg_rankings_jan2026.csv")$name,
+                       choices = read.csv("data/dg_rankings_june2026.csv")$name,
                        options = list(placeholder = 'Type to search...', maxOptions = 10)),
         uiOutput("submit_button"),
         textOutput("thank_you_msg"),
         uiOutput("have_i_picked"),
+        h4("Top golfers not yet selected (ordered by DATAGOLF ranking)", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
+        DTOutput("top_notpicked"),
         h4("Previously selected golfers", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
         DTOutput("prev_picked"),
         h4(textOutput("event_odds_name"), style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
@@ -388,6 +397,34 @@ server <- function(input, output, session) {
         paging = FALSE, 
         ordering = FALSE)
     )
+  })
+  
+  # add table of top golfers not yet picked
+  output$top_notpicked <- renderDT({
+    picked <- data() %>%
+      filter(player_name == input$player_name,
+             event_occured) %>%
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>% # get latest pick per player x event
+      ungroup() %>%
+      pivot_longer(cols = c("golfer1", "golfer2"),
+                   values_to = "picked") %>%
+      select(player_name, picked) %>%
+      filter(!is.na(picked))
+    
+      anti_join(data.frame(read.csv("data/dg_rankings_june2026.csv")) %>%
+                   mutate(rank = row_number()) %>%
+                   slice_min(order_by = rank, n = 30), picked, by = c("name" = "picked")) %>%
+        select(name, dg_rank) %>%
+        datatable(
+        colnames = c("Golfer", "DG rank"),
+        escape = FALSE, 
+        rownames = FALSE, 
+        options = list(
+          searching = FALSE, 
+          paging = FALSE, 
+          ordering = FALSE)
+      )
   })
   
   output$current_event <- renderText({
@@ -800,7 +837,7 @@ server <- function(input, output, session) {
     
     req(nrow(data()) > 0)
     
-    top_25 <- data.frame(read.csv("data/dg_rankings_jan2026.csv")) %>%
+    top_25 <- data.frame(read.csv("data/dg_rankings_june2026.csv")) %>%
       mutate(rank = row_number()) %>%
       slice_min(order_by = rank, n = 25)
     
@@ -829,7 +866,7 @@ server <- function(input, output, session) {
       hc_xAxis(title = list(text = "Player Name")) %>%
       hc_yAxis(title = list(text = "Count")) %>%
       hc_title(text = "Number of Top 25 ranked golfers picked") %>%
-      hc_caption(text = "Footnote: Data Golf rankings January 2026", style = list(fontSize = "10px", color = "#777777"))
+      hc_caption(text = "Footnote: Data Golf rankings June 2026", style = list(fontSize = "10px", color = "#777777"))
     
   })  
   

@@ -196,11 +196,6 @@ ui <- dashboardPage(
       tabItem(
         tabName = "main",
         fluidRow(
-          h3("Leaderboard", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
-          tags$iframe(src = "barchart_race.html", width = "100%", height = "650px",
-                      style = "border: none;")
-        ),
-        fluidRow(
           h3("Selections for next event", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
           box(
             title = "",
@@ -215,13 +210,14 @@ ui <- dashboardPage(
             title = "",
             status = "primary",
             solidHeader = TRUE,
-            highchartOutput("leaderboard_plot")
+            tags$iframe(src = "barchart_race.html", width = "100%", height = "650px",
+                        style = "border: none;")
           ),
           box(
             title = "",
             status = "primary",
             solidHeader = TRUE,
-            highchartOutput("time_series_plot")
+            highchartOutput("leaderboard_plot")
           ),
           box(
             title = "",

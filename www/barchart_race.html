@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Earnings Bar Chart Race</title>
+<style>
+  html, body { margin: 0; padding: 0; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  #controls { padding: 8px 20px; }
+  #controls button {
+    font-size: 13px; padding: 6px 14px; border-radius: 6px; border: 1px solid #ccc;
+    background: #fff; cursor: pointer;
+  }
+  #controls button:hover { background: #f2f2f2; }
+  #chart { width: 100%; }
+  #chart svg { display: block; }
+  .bar-label { font-size: 13px; fill: #222; dominant-baseline: middle; }
+  .value-label { font-size: 13px; font-weight: 600; fill: #222; dominant-baseline: middle; }
+  .date-label { font-size: 34px; font-weight: 700; fill: #ddd; }
+  .axis text { font-size: 11px; fill: #888; }
+  .axis .domain, .axis .tick line { stroke: #eee; }
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <button id="playBtn">Pause</button>
+</div>
+<div id="chart"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+(async function() {
+
+  // ---------- CONFIG ----------
+  // N_BARS is set automatically below to show every player - no filtering.
+  let N_BARS = null;
+  const K = 8;                 // interpolated sub-frames between each real data point (higher = smoother, slightly slower)
+  const FRAME_DURATION = 250;  // ms per sub-frame (lower = faster race)
+  const BAR_HEIGHT = 36;
+  const BAR_PADDING = 6;
+  const MARGIN = { top: 40, right: 120, bottom: 10, left: 10 };
+
+  // ---------- LOAD DATA ----------
+  // Expects race_data.json: [{order, event_name, player_name, TotalEarnings}, ...]
+  const raw = await d3.json("race_data.json");
+
+  const names = Array.from(new Set(raw.map(d => d.player_name)));
+  N_BARS = names.length; // show every player, no filtering
+
+  // Build a color palette with enough distinct colors for every player,
+  // regardless of how many there are (avoids repeats/blank colors).
+  const palette = d3.schemeTableau10
+    .concat(d3.schemeSet3)
+    .concat(d3.schemeSet2)
+    .concat(d3.schemePaired);
+  const colorList = names.map((_, i) => palette[i % palette.length]);
+  const color = d3.scaleOrdinal(names, colorList);
+
+  // group by order -> Map(name -> {value, event_name})
+  const byOrder = d3.rollup(
+    raw,
+    v => new Map(v.map(d => [d.player_name, d.TotalEarnings])),
+    d => d.order
+  );
+  const eventNameByOrder = new Map(raw.map(d => [d.order, d.event_name]));
+  const orders = Array.from(byOrder.keys()).sort((a, b) => d3.ascending(a, b));
+
+  function rankTop(valueMap) {
+    const arr = names.map(name => ({ name, value: valueMap.get(name) || 0 }));
+    arr.sort((a, b) => d3.descending(a.value, b.value));
+    return arr.slice(0, N_BARS).map((d, i) => ({ ...d, rank: i }));
+  }
+
+  // ---------- BUILD INTERPOLATED KEYFRAMES ----------
+  // Each keyframe: { label: event_name to display, valueMap: Map(name -> value) }
+  const keyframes = [];
+  for (let i = 0; i < orders.length; i++) {
+    const currentMap = byOrder.get(orders[i]);
+    const label = eventNameByOrder.get(orders[i]);
+
+    if (i === orders.length - 1) {
+      keyframes.push({ label, valueMap: currentMap });
+      break;
+    }
+    const nextMap = byOrder.get(orders[i + 1]);
+    for (let s = 0; s < K; s++) {
+      const t = s / K;
+      const interp = new Map();
+      names.forEach(name => {
+        const v0 = currentMap.get(name) || 0;
+        const v1 = nextMap.get(name) || 0;
+        interp.set(name, v0 + (v1 - v0) * t);
+      });
+      keyframes.push({ label, valueMap: interp });
+    }
+  }
+
+  // ---------- SVG SETUP ----------
+  const width = document.getElementById("chart").clientWidth || 900;
+  const height = MARGIN.top + MARGIN.bottom + N_BARS * (BAR_HEIGHT + BAR_PADDING);
+
+  const svg = d3.select("#chart").append("svg")
+    .attr("viewBox", [0, 0, width, height])
+    .attr("width", "100%")
+    .attr("height", height);
+
+  const x = d3.scaleLinear().range([MARGIN.left, width - MARGIN.right]);
+  const y = d3.scaleBand()
+    .domain(d3.range(N_BARS))
+    .range([MARGIN.top, MARGIN.top + N_BARS * (BAR_HEIGHT + BAR_PADDING)])
+    .padding(0.2);
+
+  const axisG = svg.append("g").attr("class", "axis").attr("transform", `translate(0,${MARGIN.top})`);
+  const barsG = svg.append("g");
+  const labelsG = svg.append("g");
+  const dateLabel = svg.append("text")
+    .attr("class", "date-label")
+    .attr("x", width - MARGIN.right)
+    .attr("y", height - 20)
+    .attr("text-anchor", "end");
+
+  const fmt = d3.format("$,.0f");
+
+  function render(keyframe) {
+    const top = rankTop(keyframe.valueMap);
+    x.domain([0, d3.max(top, d => d.value) || 1]);
+
+    axisG.transition().duration(FRAME_DURATION).call(
+      d3.axisTop(x).ticks(width / 160, "$~s")
+    );
+
+    const bars = barsG.selectAll("rect").data(top, d => d.name);
+    bars.join(
+      enter => enter.append("rect")
+        .attr("fill", d => color(d.name))
+        .attr("x", x(0))
+        .attr("y", d => y(d.rank))
+        .attr("height", y.bandwidth())
+        .attr("width", d => Math.max(0, x(d.value) - x(0))),
+      update => update,
+      exit => exit.transition().duration(FRAME_DURATION).style("opacity", 0).remove()
+    )
+    .transition().duration(FRAME_DURATION).ease(d3.easeLinear)
+      .attr("y", d => y(d.rank))
+      .attr("width", d => Math.max(0, x(d.value) - x(0)));
+
+    const nameLabels = labelsG.selectAll("text.bar-label").data(top, d => d.name);
+    nameLabels.join(
+      enter => enter.append("text")
+        .attr("class", "bar-label")
+        .attr("x", x(0) + 8)
+        .attr("y", d => y(d.rank) + y.bandwidth() / 2)
+        .text(d => d.name),
+      update => update,
+      exit => exit.remove()
+    )
+    .transition().duration(FRAME_DURATION).ease(d3.easeLinear)
+      .attr("y", d => y(d.rank) + y.bandwidth() / 2);
+
+    const valueLabels = labelsG.selectAll("text.value-label").data(top, d => d.name);
+    valueLabels.join(
+      enter => enter.append("text")
+        .attr("class", "value-label")
+        .attr("y", d => y(d.rank) + y.bandwidth() / 2)
+        .attr("x", d => x(d.value) + 8)
+        .text(d => fmt(d.value)),
+      update => update,
+      exit => exit.remove()
+    )
+    .transition().duration(FRAME_DURATION).ease(d3.easeLinear)
+      .attr("y", d => y(d.rank) + y.bandwidth() / 2)
+      .attr("x", d => x(d.value) + 8)
+      .textTween(function(d) {
+        const el = d3.select(this);
+        const prev = parseFloat(el.text().replace(/[^0-9.-]/g, "")) || 0;
+        const i = d3.interpolateNumber(prev, d.value);
+        return t => fmt(i(t));
+      });
+
+    dateLabel.text(keyframe.label);
+  }
+
+  // ---------- PLAYBACK ----------
+  let i = 0;
+  let playing = true;
+  let timer = null;
+
+  function step() {
+    render(keyframes[i]);
+    i = i + 1;
+    if (i >= keyframes.length) {
+      playing = false;
+      d3.select("#playBtn").text("Replay");
+      return;
+    }
+    timer = setTimeout(step, FRAME_DURATION);
+  }
+
+  d3.select("#playBtn").on("click", function() {
+    if (!playing) {
+      i = (i >= keyframes.length) ? 0 : i;
+      playing = true;
+      d3.select(this).text("Pause");
+      step();
+    } else {
+      playing = false;
+      clearTimeout(timer);
+      d3.select(this).text("Play");
+    }
+  });
+
+  render(keyframes[0]);
+  timer = setTimeout(step, FRAME_DURATION);
+
+})();
+</script>
+</body>
+</html>

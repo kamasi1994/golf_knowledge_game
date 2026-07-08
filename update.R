@@ -106,6 +106,29 @@ update_golf_data <- function(){
     
     update_google_sheet(df)
     
+    ######################## update json data for bar chart race plot
+    export_data <- df %>% 
+      # only use latest pick per player / tournament
+      group_by(player_name, event_name) %>%
+      slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      # only show data for events that have occurred
+      filter(event_occured) %>% 
+      left_join(read.csv("data/events.csv"), by = "event_name") %>%
+      group_by(order, event_name, player_name) %>% 
+      summarise(TotalEarnings = sum(earnings_g1 +earnings_g2, na.rm = TRUE), .groups = "drop") %>%
+      group_by(player_name) %>%
+      arrange(order) %>%
+      mutate(TotalEarnings = cumsum(TotalEarnings)) %>%
+      ungroup() %>%
+      arrange(order) %>%
+      mutate(event_name = factor(event_name, levels = unique(event_name[order(order)]))) %>%
+      select(order, event_name, player_name, TotalEarnings) %>%
+      arrange(order, desc(TotalEarnings))
+    
+    # Write alongside the HTML file (or into your Shiny app's www/ folder)
+    jsonlite::write_json(export_data, "www/race_data.json", dataframe = "rows", auto_unbox = TRUE)
+    
     return("Complete")
   }
 }

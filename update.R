@@ -107,7 +107,7 @@ update_golf_data <- function(){
     update_google_sheet(df)
     
     ######################## update json data for bar chart race plot
-    export_data <- df %>% 
+    export_data <- read_sheet(sheet_url, sheet = "2026") %>% 
       # only use latest pick per player / tournament
       group_by(player_name, event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%

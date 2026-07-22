@@ -1145,19 +1145,29 @@ server <- function(input, output, session) {
     losses <- n - wins
     
     test <- binom.test(wins, n, p = 0.5, alternative = "two.sided")
+    p <- test$p.value
+    
+    verdict <- if (p < 0.01) {
+      list(text = "Strong evidence against a fair 50/50 coin. RIGGED", color = "#B71C1C")
+    } else if (p < 0.05) {
+      list(text = "Some evidence against fairness, but not overwhelming — possibly rigged, so worth monitoring", color = "#E65100")
+    } else if (p < 0.10) {
+      list(text = "Borderline rigged. Close enough to the significance threshold thats it's inconclusive either way — more data needed.", color = "#F9A825")
+    } else {
+      list(text = "Consistent with a fair coin at this sample size. Not rigged", color = "#004D40")
+    }
     
     tags$div(
       style = "text-align: center; margin-top: 15px; font-size: 18px;",
       tags$p(paste0("Out of ", n, " coin tosses: ", wins, " won, ", losses, " lost (",
                     scales::percent(wins / n, accuracy = 0.1), " win rate)")),
-      tags$p(paste0("test p-value: ", round(test$p.value, 3))),
       tags$p(
-        if (test$p.value < 0.05) {
-          "statistically significant: RIGGED"
-        } else {
-          "Not statistically significant — consistent with a fair coin at this sample size (not rigged)"
-        },
-        style = "font-style: italic; color: #004D40;"
+        tags$p(paste0("p-value: ", round(p, 4))),
+        style = "font-size: 22px; color: #004D40;"
+      ),
+      tags$p(
+        verdict$text,
+        style = paste0("font-style: italic; color: ", verdict$color, ";")
       )
     )
   })

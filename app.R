@@ -310,7 +310,8 @@ ui <- dashboardPage(
         uiOutput("coin_animation"),
         uiOutput("game_result"),
         h4("Degenerate Gamblers (coin toss results)", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
-        DTOutput("degenerate_gambler")
+        DTOutput("degenerate_gambler"),
+        DTOutput("coin_fairness_check")
       ),
         
       #################
@@ -613,7 +614,9 @@ server <- function(input, output, session) {
                          earnings_g2 = NA,
                          event_occured = FALSE,
                          coin_toss = FALSE,
-                         scraped = FALSE) 
+                         scraped = FALSE,
+                         coin_toss_result = NA_character_,
+                         coin_toss_won = NA) 
     
     # add odds
     odds <- get_odds()$event_odds_table %>%
@@ -1027,6 +1030,8 @@ server <- function(input, output, session) {
            mutate(earnings_g1 = earnings_g1 * 2, # double the earnings
                   earnings_g2 = earnings_g2 * 2,
                   coin_toss = TRUE, # update coin toss col
+                  coin_toss_result = result,
+                  coin_toss_won = TRUE,
                   input_date = as.POSIXct(Sys.time())) %>%
            select(-order, -deadline)
            
@@ -1047,6 +1052,8 @@ server <- function(input, output, session) {
          mutate(earnings_g1 = 0, # set earnings to €0
               earnings_g2 = 0,
               coin_toss = TRUE, # update coin toss col
+              coin_toss_result = result,
+              coin_toss_won = FALSE,
               input_date = as.POSIXct(Sys.time())) %>%
          select(-order, - deadline)
        
@@ -1101,15 +1108,24 @@ server <- function(input, output, session) {
     data() %>%
       filter(event_occured & coin_toss) %>%
       mutate(coin_toss_success = if_else(earnings_g1 == 0 & earnings_g2 == 0, "Lost all earnings", "Doubled earnings")) %>%
-      select(player_name, event_name, coin_toss_success) %>%
-      datatable(colnames = c("Name", "Event", "Coin Toss Result"),
-                escape = FALSE, 
-                rownames = FALSE, 
-                options = list(
-                  searching = FALSE, 
-                  paging = FALSE, 
-                  ordering = FALSE)
-      )
+      select(player_name, event_name, coin_toss_result, coin_toss_success) %>%
+      datatable(colnames = c("Name", "Event", "Coin Landed On", "Coin Toss Result"),
+                escape = FALSE, rownames = FALSE,
+                options = list(searching = FALSE, paging = FALSE, ordering = FALSE))
+  })
+  
+  # coin toss fairness
+  output$coin_fairness_check <- renderDT({
+    data() %>%
+      filter(coin_toss, !is.na(coin_toss_result)) %>%
+      count(coin_toss_result, name = "n") %>%
+      mutate(pct = scales::percent(n / sum(n), accuracy = 0.1)) %>%
+      datatable(colnames = c("Coin Landed On", "Count", "% of Tosses"),
+                caption = htmltools::tags$caption(
+                  style = "caption-side: top; text-align: center; font-size: 20px; font-weight: bold;",
+                  "Heads/Tails"),
+                escape = FALSE, rownames = FALSE,
+                options = list(searching = FALSE, paging = FALSE, ordering = FALSE))
   })
 } 
 

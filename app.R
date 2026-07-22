@@ -311,7 +311,8 @@ ui <- dashboardPage(
         uiOutput("game_result"),
         h4("Degenerate Gamblers (coin toss results)", style = "text-align: center; font-size: 30px; font-weight: bold; color: #004D40; "),  
         DTOutput("degenerate_gambler"),
-        DTOutput("coin_fairness_check")
+        DTOutput("coin_fairness_check"),
+        uiOutput("coin_fairness_pvalue")
       ),
         
       #################
@@ -1126,6 +1127,39 @@ server <- function(input, output, session) {
                   "Heads/Tails"),
                 escape = FALSE, rownames = FALSE,
                 options = list(searching = FALSE, paging = FALSE, ordering = FALSE))
+  })
+  
+  # show statistical significance
+  output$coin_fairness_pvalue <- renderUI({
+    
+    toss_data <- data() %>%
+      filter(coin_toss, event_occured, !is.na(coin_toss_won))
+    
+    n <- nrow(toss_data)
+    
+    if (n == 0) {
+      return(tags$p("No coin toss results recorded yet.", style = "text-align: center; color: grey;"))
+    }
+    
+    wins <- sum(toss_data$coin_toss_won)
+    losses <- n - wins
+    
+    test <- binom.test(wins, n, p = 0.5, alternative = "two.sided")
+    
+    tags$div(
+      style = "text-align: center; margin-top: 15px; font-size: 18px;",
+      tags$p(paste0("Out of ", n, " coin tosses: ", wins, " won, ", losses, " lost (",
+                    scales::percent(wins / n, accuracy = 0.1), " win rate)")),
+      tags$p(paste0("test p-value: ", round(test$p.value, 3))),
+      tags$p(
+        if (test$p.value < 0.05) {
+          "statistically significant: RIGGED"
+        } else {
+          "Not statistically significant — consistent with a fair coin at this sample size (not rigged)"
+        },
+        style = "font-style: italic; color: #004D40;"
+      )
+    )
   })
 } 
 

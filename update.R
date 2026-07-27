@@ -51,7 +51,7 @@ update_golf_data <- function(){
     group_by(player_name, event_name) %>%
     slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
     ungroup() %>%
-    select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss, scraped, odds_g1, odds_g2)
+    select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss, scraped, odds_g1, odds_g2, coin_toss_result, coin_toss_won)
   
   if(nrow(df %>% filter(!scraped)) == 0){
     return("Data is already up to date")
@@ -79,7 +79,7 @@ update_golf_data <- function(){
       group_by(player_name, event_name) %>%
       slice_max(order_by = input_date, n = 1, with_ties = FALSE) %>%
       ungroup() %>%
-      select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss, scraped, odds_g1, odds_g2)
+      select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, event_occured, coin_toss, scraped, odds_g1, odds_g2, coin_toss_result, coin_toss_won)
     
     # double earnings if odds >= 100/1
     df_new <- df_new %>%

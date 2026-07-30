@@ -634,7 +634,9 @@ server <- function(input, output, session) {
       select(-odds) %>%
       left_join(odds, by = c("golfer2" = "player_name", "event_name")) %>%
       mutate(odds_g2 = odds) %>%
-      select(-odds)
+      select(-odds) %>%
+      select(input_date, event_name, player_name, golfer1, golfer2, earnings_g1, earnings_g2, 
+             event_occured, coin_toss, scraped, odds_g1, odds_g2, coin_toss_result, coin_toss_won)
 
     # data before submission of new picks
     old <- data()

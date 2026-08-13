@@ -304,7 +304,7 @@ ui <- dashboardPage(
                      selected = character(0)),  # No default selection
         
         # Button to flip the coin
-        actionButton("flip_coin", "Toss Coin", class = "btn-las-vegas"),
+        actionButton("flip_coin", "Toss Coin", class = "btn-las-vegas", disabled = TRUE),
         
         # Placeholder for the game result
         uiOutput("coin_animation"),

@@ -622,7 +622,8 @@ server <- function(input, output, session) {
     # add odds
     odds <- get_odds()$event_odds_table %>%
       mutate(player_name = str_squish(player_name)) %>%
-      mutate(event_name = if_else(event_name == "the Memorial Tournament", "the Memorial Tournament pres. by Workday", event_name))
+      mutate(event_name = if_else(event_name == "the Memorial Tournament", "the Memorial Tournament pres. by Workday", event_name),
+             event_name = if_else(event_name == "FedEx St. Jude Championship", "FedEx St.Jude Championship", event_name))
     
     
     new_entry <- new_entry %>%
@@ -685,7 +686,8 @@ server <- function(input, output, session) {
     
     odds <- get_odds()$event_odds_table %>%
       mutate(player_name = str_squish(player_name)) %>%
-      mutate(event_name = if_else(event_name == "the Memorial Tournament", "the Memorial Tournament pres. by Workday", event_name))
+      mutate(event_name = if_else(event_name == "the Memorial Tournament", "the Memorial Tournament pres. by Workday", event_name),
+             event_name = if_else(event_name == "FedEx St. Jude Championship", "FedEx St.Jude Championship", event_name))
     
     data() %>%
       filter(!event_occured) %>%
